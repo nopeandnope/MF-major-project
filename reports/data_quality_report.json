@@ -1,0 +1,9 @@
+{
+  "database_path": "data/historical_20y.db",
+  "total_schemes": 19,
+  "passed_schemes": 19,
+  "failed_schemes": 0,
+  "pass_rate": 100.0,
+  "avg_quality_score": 79.74,
+  "failed_scheme_details": []
+}

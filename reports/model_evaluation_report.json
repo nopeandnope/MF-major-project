@@ -1,0 +1,75 @@
+{
+  "timestamp": "2025-11-10T15:45:37.300177",
+  "num_predictions": 200,
+  "accuracy_metrics": {
+    "rmse": 5.5525,
+    "mae": 4.3706,
+    "mape": 86.71,
+    "r2_score": 0.7966,
+    "directional_accuracy": 90.0,
+    "spearman_correlation": 0.9035,
+    "spearman_p_value": 0.0,
+    "pearson_correlation": 0.9095,
+    "pearson_p_value": 0.0,
+    "prediction_bias": -1.0302,
+    "num_predictions": 200
+  },
+  "quintile_analysis": {
+    "top_quintile_avg_actual": 20.4,
+    "top_quintile_avg_predicted": 17.14,
+    "bottom_quintile_avg_actual": -10.91,
+    "bottom_quintile_avg_predicted": -8.86,
+    "quintile_spread": 31.31,
+    "top_quintile_sharpe": 46.89,
+    "bottom_quintile_sharpe": -22.92,
+    "top_quintile_size": 40,
+    "bottom_quintile_size": 40
+  },
+  "category_performance": [
+    {
+      "category": "Small Cap",
+      "count": 43,
+      "rmse": 5.95,
+      "mae": 4.71,
+      "directional_accuracy": 88.37,
+      "avg_predicted": 2.95,
+      "avg_actual": 4.07
+    },
+    {
+      "category": "Mid Cap",
+      "count": 29,
+      "rmse": 6.16,
+      "mae": 4.79,
+      "directional_accuracy": 86.21,
+      "avg_predicted": 3.57,
+      "avg_actual": 2.88
+    },
+    {
+      "category": "Multi Cap",
+      "count": 38,
+      "rmse": 4.89,
+      "mae": 3.99,
+      "directional_accuracy": 94.74,
+      "avg_predicted": 5.54,
+      "avg_actual": 5.68
+    },
+    {
+      "category": "Debt",
+      "count": 38,
+      "rmse": 6.22,
+      "mae": 5.1,
+      "directional_accuracy": 86.84,
+      "avg_predicted": 4.26,
+      "avg_actual": 5.98
+    },
+    {
+      "category": "Large Cap",
+      "count": 52,
+      "rmse": 4.73,
+      "mae": 3.6,
+      "directional_accuracy": 92.31,
+      "avg_predicted": 3.36,
+      "avg_actual": 5.41
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+
+# Models (trained models can be large)
+models/*.h5
+models/*.pkl
+models/*.joblib
+models/**/*.pt
+models/**/*.pth
+models/**/*.safetensors
+models/**/checkpoint-*/
+models/**/optimizer.pt
+models/**/scheduler.pt
+models/**/scaler.pt
+models/**/model.safetensors
+
+# Data (if large datasets)
+data/*.csv
+data/*.parquet
+data/*.db
+
+# Reports (if generated)
+reports/*.html
+reports/*.pdf
+
+# Environment variables
+.env
+.env.local
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+nul

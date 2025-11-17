@@ -1,0 +1,569 @@
+============================================================
+MF ADVISOR PROJECT - COMPLETE SETUP & EXECUTION GUIDE
+============================================================
+
+This guide provides step-by-step instructions to set up and run the
+AI-Powered Mutual Fund Advisor project with 20-year historical data.
+
+============================================================
+QUICK START - ONE COMMAND SETUP (RECOMMENDED)
+============================================================
+
+FASTEST WAY TO GET STARTED:
+---------------------------
+1. Create virtual environment:
+   python -m venv venv
+
+2. Activate virtual environment:
+   Windows: venv\Scripts\activate
+   Linux/Mac: source venv/bin/activate
+
+3. Run automated setup:
+   python setup_and_train_complete.py
+
+That's it! This single command will:
+✅ Install all dependencies automatically
+✅ Collect 20-year historical data (200 funds)
+✅ Train Gemma-2B model with LoRA fine-tuning
+✅ Prepare everything for deployment
+
+Estimated Time: 2-5 hours (depending on hardware & network)
+
+QUICK SETUP OPTIONS:
+-------------------
+Skip data collection (use existing data):
+  python setup_and_train_complete.py --skip-data
+
+Skip model training (use existing model):
+  python setup_and_train_complete.py --skip-training
+
+Quick setup (skip both, just install dependencies):
+  python setup_and_train_complete.py --quick
+
+Limit data collection to 100 funds:
+  python setup_and_train_complete.py --max-funds 100
+
+============================================================
+MANUAL SETUP (STEP-BY-STEP)
+============================================================
+
+If you prefer manual control, follow these steps:
+
+STEP 1: ENVIRONMENT SETUP
+--------------------------
+Command: python -m venv venv
+Purpose: Create virtual environment
+
+Command: venv\Scripts\activate  (Windows) OR source venv/bin/activate (Linux/Mac)
+Purpose: Activate virtual environment
+
+Command: python -m pip install -r requirements.txt
+Purpose: Install all dependencies
+
+STEP 2: COLLECT 20-YEAR HISTORICAL DATA
+----------------------------------------
+Command: python -c "import asyncio; from src.enhanced_20_year_collector import Enhanced20YearCollector; collector = Enhanced20YearCollector(); asyncio.run(collector.collect_20_year_data(max_funds=200))"
+Purpose: Collect comprehensive 20-year mutual fund data
+Time: 15-45 minutes
+Output: data/historical_20y.db
+
+STEP 3: TRAIN ENHANCED MODEL
+-----------------------------
+Command: python train_enhanced_model.py
+Purpose: Train Google Gemma-2B model with LoRA
+Time: 1-4 hours
+Output: models/enhanced_20y_advisor/
+
+STEP 4: RUN THE APPLICATION
+----------------------------
+Command: python run_server.py
+Purpose: Start the web server
+Access: http://localhost:8000
+
+============================================================
+PREREQUISITES
+============================================================
+
+✅ Python 3.11+ installed
+✅ At least 8GB RAM (16GB recommended for training)
+✅ 10GB free disk space
+✅ Stable internet connection
+✅ Windows/Linux/macOS compatible
+
+============================================================
+FILE STRUCTURE & PURPOSE
+============================================================
+
+AUTOMATED SETUP:
+📜 setup_and_train_complete.py → ONE-FILE AUTOMATED SETUP ⭐ RUN THIS!
+
+CORE APPLICATION:
+- run_server.py                 → Start web server
+- api/app.py                    → FastAPI application
+- src/inference_stable.py       → AI inference engine
+- web/index.html                → Web interface
+- web/static/app.js             → Frontend logic
+
+DATA & TRAINING:
+- src/enhanced_20_year_collector.py → 20-year data collector
+- train_enhanced_model.py           → Model training script
+
+DATA & MODELS:
+- data/historical_20y.db        → Historical database
+- models/enhanced_20y_advisor/  → Trained model
+
+LOGS:
+- logs/complete_setup.log           → Automated setup logs
+- logs/enhanced_data_collection.log → Data collection logs
+- logs/enhanced_model_training.log  → Training logs
+
+============================================================
+TYPICAL WORKFLOW
+============================================================
+
+FOR NEW PROJECT SETUP:
+1. Clone/download the project
+2. Create virtual environment: python -m venv venv
+3. Activate environment: venv\Scripts\activate
+4. Run automated setup: python setup_and_train_complete.py
+5. Wait for completion (2-5 hours)
+6. Start server: python run_server.py
+7. Open browser: http://localhost:8000
+
+FOR DEVELOPMENT:
+1. Activate environment: venv\Scripts\activate
+2. Make your changes
+3. Test: python run_server.py
+4. Access: http://localhost:8000
+
+FOR RE-TRAINING:
+1. Activate environment: venv\Scripts\activate
+2. Run: python train_enhanced_model.py
+3. Monitor: tail -f logs/enhanced_model_training.log
+
+============================================================
+API ENDPOINTS
+============================================================
+
+GET  /                    → Web interface
+POST /api/recommend       → Get investment recommendations
+GET  /api/health         → Health check
+GET  /docs               → API documentation (Swagger UI)
+
+Example API Request:
+POST /api/recommend
+{
+    "amount": 100000,
+    "horizon": 5,
+    "risk_tolerance": "Moderate",
+    "financial_goal": "Wealth Creation",
+    "age": 30
+}
+
+Example Response:
+{
+    "recommendations": [
+        {
+            "fund_name": "HDFC Top 100 Fund",
+            "category": "Large Cap",
+            "allocation_percentage": 40,
+            "amount": 40000,
+            "expected_return": 12.5,
+            "risk_level": "Moderate"
+        }
+    ],
+    "total_expected_return": 11.8,
+    "portfolio_summary": "Balanced growth portfolio..."
+}
+
+============================================================
+TROUBLESHOOTING
+============================================================
+
+PROBLEM: Import errors (ModuleNotFoundError)
+SOLUTION:
+  python -m pip install -r requirements.txt
+  python -m pip install yfinance loguru transformers peft
+
+PROBLEM: Hugging Face authentication error
+SOLUTION:
+  1. Visit https://huggingface.co/google/gemma-2b
+  2. Request access and accept terms
+  3. Generate token at https://huggingface.co/settings/tokens
+  4. Create .env file with: HUGGINGFACE_HUB_TOKEN=your_token_here
+
+PROBLEM: Training out of memory
+SOLUTION:
+  Edit train_enhanced_model.py:
+  - Line 37: Change batch_size to 1
+  - Line 38: Increase gradient_accumulation_steps to 32
+
+PROBLEM: Data collection fails
+SOLUTION:
+  - Check internet connection
+  - Reduce max_funds parameter
+  - Use: python setup_and_train_complete.py --max-funds 50
+
+PROBLEM: Port 8000 already in use
+SOLUTION:
+  Edit run_server.py and change port to 8001 or kill process:
+  Windows: netstat -ano | findstr :8000
+  Linux/Mac: lsof -ti:8000 | xargs kill
+
+PROBLEM: Training too slow
+SOLUTION:
+  Quick training mode - edit train_enhanced_model.py:
+  - Line 437: Change 25000 to 5000 (training examples)
+  - Line 40: Change num_epochs to 2
+
+============================================================
+PERFORMANCE OPTIMIZATION
+============================================================
+
+FOR FASTER SETUP:
+- Use --quick flag to skip data collection and training
+- Use --max-funds 50 for minimal data collection
+- Reduce training examples in train_enhanced_model.py
+
+FOR BETTER ACCURACY:
+- Collect more data: --max-funds 500
+- Train longer: Increase num_epochs to 6-8
+- More training examples: Change 25000 to 50000
+- Use GPU if available (automatic detection)
+
+FOR PRODUCTION:
+- Set up PostgreSQL/MySQL instead of SQLite
+- Use Gunicorn/uWSGI for serving
+- Set up nginx reverse proxy
+- Enable SSL/TLS certificates
+- Implement authentication and rate limiting
+- Set up monitoring (Prometheus + Grafana)
+
+Production command:
+gunicorn -w 4 -k uvicorn.workers.UvicornWorker api.app:app --bind 0.0.0.0:8000
+
+============================================================
+FEATURES & CAPABILITIES
+============================================================
+
+DATA COLLECTION:
+✅ 20-year historical NAV data for 200+ funds
+✅ Multiple fund categories (Equity, Debt, Hybrid)
+✅ Market indices (NIFTY, SENSEX, Bank NIFTY)
+✅ Fund metadata (AUM, expense ratio, category)
+✅ Performance metrics (returns, volatility, drawdown)
+
+MODEL TRAINING:
+✅ Google Gemma-2B base model (2 billion parameters)
+✅ LoRA fine-tuning (1.54% trainable parameters)
+✅ 25,000 synthetic training examples
+✅ Market regime awareness (bull/bear/sideways)
+✅ Risk-adjusted portfolio construction
+✅ Tax optimization strategies
+
+RECOMMENDATIONS:
+✅ Personalized portfolio allocation
+✅ Risk-tolerance based fund selection
+✅ Age-appropriate equity/debt mix
+✅ Goal-based investment planning
+✅ SIP and lumpsum strategies
+✅ Tax-efficient fund selection (ELSS)
+✅ Rebalancing recommendations
+
+============================================================
+SYSTEM REQUIREMENTS
+============================================================
+
+MINIMUM:
+- Python 3.11+
+- 8GB RAM
+- 10GB disk space
+- 2 CPU cores
+- Internet connection
+
+RECOMMENDED:
+- Python 3.11+
+- 16GB RAM
+- 20GB disk space
+- 4+ CPU cores
+- NVIDIA GPU with 8GB+ VRAM (for faster training)
+- Fast internet connection (for data collection)
+
+OPTIMAL (PRODUCTION):
+- Python 3.11+
+- 32GB RAM
+- 50GB SSD
+- 8+ CPU cores
+- NVIDIA GPU with 16GB+ VRAM
+- Database server (PostgreSQL/MySQL)
+- Dedicated server or cloud instance
+
+============================================================
+MONITORING & LOGS
+============================================================
+
+Log files location: logs/
+
+Key log files:
+- complete_setup.log           → Automated setup progress
+- enhanced_data_collection.log → Data collection status
+- enhanced_model_training.log  → Training progress
+- application.log              → Runtime errors and info
+
+Check training progress:
+  Windows: type logs\enhanced_model_training.log
+  Linux/Mac: tail -f logs/enhanced_model_training.log
+
+Check if training is complete:
+  Look for: "Enhanced training completed!"
+
+Check data collection status:
+  Look for: "20-YEAR DATA COLLECTION COMPLETED"
+
+============================================================
+SUCCESS INDICATORS
+============================================================
+
+✅ SETUP SUCCESSFUL:
+- No error messages during setup
+- Virtual environment activated
+- All dependencies installed
+- Imports work: python -c "import transformers, peft, torch"
+
+✅ DATA COLLECTION SUCCESSFUL:
+- File exists: data/historical_20y.db
+- File size: >50MB
+- Log shows: "20-YEAR DATA COLLECTION COMPLETED"
+
+✅ TRAINING SUCCESSFUL:
+- Directory exists: models/enhanced_20y_advisor/
+- Contains files: adapter_config.json, adapter_model.safetensors
+- Log shows: "Enhanced training completed!"
+
+✅ APPLICATION RUNNING:
+- Server starts without errors
+- http://localhost:8000 accessible
+- Web interface loads
+- API returns JSON responses
+
+============================================================
+DEVELOPMENT & CUSTOMIZATION
+============================================================
+
+MODIFY NUMBER OF TRAINING EXAMPLES:
+Edit train_enhanced_model.py, line 437:
+  training_examples = self.generate_enhanced_training_data(25000)
+Change 25000 to desired number (e.g., 10000 for faster, 50000 for better)
+
+MODIFY DATA COLLECTION SCOPE:
+Edit src/enhanced_20_year_collector.py, line 29-73:
+  Add/remove fund scheme codes from priority_funds list
+
+MODIFY MODEL PARAMETERS:
+Edit train_enhanced_model.py, lines 35-44:
+  Adjust learning_rate, batch_size, num_epochs, etc.
+
+MODIFY SERVER PORT:
+Edit run_server.py, line 11:
+  Change port=8000 to desired port
+
+ADD NEW FUND CATEGORIES:
+Edit src/enhanced_20_year_collector.py:
+  Add categories to fund classification logic
+
+CUSTOMIZE RECOMMENDATIONS:
+Edit src/inference_stable.py:
+  Modify portfolio construction logic
+
+============================================================
+TESTING
+============================================================
+
+TEST SETUP:
+python -c "import transformers, peft, torch, yfinance; print('✅ All imports successful')"
+
+TEST DATA:
+python -c "import sqlite3; conn = sqlite3.connect('data/historical_20y.db'); print(f'✅ Database has {conn.execute(\"SELECT COUNT(*) FROM funds\").fetchone()[0]} funds')"
+
+TEST MODEL:
+python -c "from pathlib import Path; print('✅ Model exists' if Path('models/enhanced_20y_advisor').exists() else '❌ Model missing')"
+
+TEST SERVER:
+python run_server.py &
+curl http://localhost:8000/api/health
+
+TEST API:
+curl -X POST http://localhost:8000/api/recommend \
+  -H "Content-Type: application/json" \
+  -d '{"amount":100000,"horizon":5,"risk_tolerance":"Moderate","financial_goal":"Wealth Creation","age":30}'
+
+============================================================
+FREQUENTLY ASKED QUESTIONS
+============================================================
+
+Q: How long does the complete setup take?
+A: 2-5 hours typically (30min data + 1-4hrs training)
+
+Q: Can I use the system without training?
+A: Yes! Use --quick flag or --skip-training
+
+Q: Do I need a GPU?
+A: No, but GPU speeds up training significantly (4hrs → 30min)
+
+Q: How much data is collected?
+A: 200+ funds with 20 years of daily NAV data (~3.6M records)
+
+Q: What model is used?
+A: Google Gemma-2B with LoRA fine-tuning (2B parameters)
+
+Q: Is internet required after setup?
+A: No, everything works offline after initial setup
+
+Q: Can I deploy this to production?
+A: Yes, but add authentication, use proper DB, and secure server
+
+Q: How accurate are the recommendations?
+A: Based on 20-year historical data + AI, but not financial advice
+
+Q: Can I add more funds?
+A: Yes, modify enhanced_20_year_collector.py
+
+Q: How do I update the model?
+A: Re-run: python train_enhanced_model.py
+
+============================================================
+COMMAND REFERENCE - QUICK LOOKUP
+============================================================
+
+SETUP:
+  python setup_and_train_complete.py           → Full automated setup
+  python setup_and_train_complete.py --quick   → Quick setup (skip data/training)
+  python setup_and_train_complete.py --skip-data    → Skip data collection
+  python setup_and_train_complete.py --skip-training → Skip training
+
+DATA:
+  python -c "import asyncio; from src.enhanced_20_year_collector import Enhanced20YearCollector; ..."
+
+TRAINING:
+  python train_enhanced_model.py               → Train model
+
+SERVER:
+  python run_server.py                         → Start server
+
+LOGS:
+  tail -f logs/complete_setup.log             → Watch setup progress
+  tail -f logs/enhanced_model_training.log    → Watch training progress
+  tail -f logs/enhanced_data_collection.log   → Watch data collection
+
+TESTING:
+  python -c "import transformers, peft, torch" → Test imports
+  curl http://localhost:8000/api/health       → Test server
+
+============================================================
+SUPPORT & RESOURCES
+============================================================
+
+For issues:
+1. Check logs in logs/ directory
+2. Verify all dependencies installed
+3. Check Python version (3.11+)
+4. Ensure enough disk space and RAM
+
+Common solutions:
+- ModuleNotFoundError → pip install -r requirements.txt
+- Out of memory → Reduce batch_size or training examples
+- Port in use → Change port or kill existing process
+- Training fails → Check Hugging Face token in .env
+- Data collection fails → Check internet, reduce max_funds
+
+Project structure:
+- Source code: src/
+- API: api/
+- Web interface: web/
+- Data: data/
+- Models: models/
+- Logs: logs/
+
+============================================================
+WHAT HAPPENS WHEN YOU RUN setup_and_train_complete.py
+============================================================
+
+PHASE 1: ENVIRONMENT VERIFICATION (1-2 minutes)
+  ✓ Checks Python version (3.11+)
+  ✓ Checks virtual environment
+  ✓ Installs dependencies from requirements.txt
+  ✓ Verifies critical package imports
+  ✓ Checks Hugging Face authentication
+
+PHASE 2: DATA COLLECTION (15-45 minutes)
+  ✓ Connects to MF API and Yahoo Finance
+  ✓ Downloads 20-year historical data
+  ✓ Collects 200+ mutual funds
+  ✓ Collects market indices (NIFTY, SENSEX)
+  ✓ Stores in SQLite database (data/historical_20y.db)
+  ✓ Calculates performance metrics
+
+PHASE 3: MODEL TRAINING (1-4 hours)
+  ✓ Loads Google Gemma-2B model
+  ✓ Generates 25,000 training examples
+  ✓ Applies LoRA adapters
+  ✓ Fine-tunes model (4 epochs)
+  ✓ Saves trained model
+  ✓ Validates model performance
+
+PHASE 4: VERIFICATION (1 minute)
+  ✓ Checks data exists
+  ✓ Checks model exists
+  ✓ Prints summary
+  ✓ Shows next steps
+
+TOTAL TIME: 2-5 hours (varies by hardware and network)
+
+============================================================
+NEXT STEPS AFTER SETUP COMPLETES
+============================================================
+
+1. START THE SERVER:
+   python run_server.py
+
+2. OPEN YOUR BROWSER:
+   http://localhost:8000
+
+3. TEST THE SYSTEM:
+   - Enter investment amount
+   - Select time horizon
+   - Choose risk tolerance
+   - Set financial goal
+   - Enter age
+   - Click "Get Recommendations"
+
+4. VIEW RECOMMENDATIONS:
+   - Personalized fund allocation
+   - Expected returns
+   - Risk analysis
+   - Investment strategy
+
+5. OPTIONAL - TEST API:
+   curl -X POST http://localhost:8000/api/recommend \
+     -H "Content-Type: application/json" \
+     -d '{"amount":100000,"horizon":5,"risk_tolerance":"Moderate","age":30,"financial_goal":"Wealth Creation"}'
+
+============================================================
+END OF SETUP GUIDE
+============================================================
+
+Remember: This is an AI-powered recommendation system based on
+historical data. Always consult with SEBI-registered financial
+advisors before making investment decisions.
+
+For best results:
+✅ Run complete setup (all steps)
+✅ Wait for training to complete
+✅ Use sufficient data (200+ funds)
+✅ Keep system updated
+
+Quick start: python setup_and_train_complete.py
+Then: python run_server.py
+Access: http://localhost:8000
+
+Happy Investing! 🚀

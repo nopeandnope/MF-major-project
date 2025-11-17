@@ -1,0 +1,3490 @@
+================================================================================
+MUTUAL FUND ADVISOR PROJECT - FUTURE DEVELOPMENT PLAN
+================================================================================
+Document Version: 1.0
+Created: January 2025
+Purpose: Comprehensive roadmap for enhancing the MF Advisor system with
+         backtesting, improved model accuracy, news portal, and user
+         authentication features
+================================================================================
+
+
+TABLE OF CONTENTS
+================================================================================
+1. Executive Summary
+2. Current Project Analysis
+3. Data Collection Strategy (100+ Funds, 5+ Years)
+4. Backtesting Framework Implementation
+5. Model Training & Accuracy Testing
+6. News & Updates Portal
+7. User Authentication & Portfolio Management
+8. Implementation Roadmap (6 Phases)
+9. Technical Stack & Libraries
+10. Potential Challenges & Solutions
+11. Success Metrics & KPIs
+12. Cost Estimates & Resources
+13. Immediate Next Steps
+
+
+================================================================================
+1. EXECUTIVE SUMMARY
+================================================================================
+
+Current Project Status:
+-----------------------
+Our mutual fund advisor project has a solid foundation with:
+- 200+ mutual funds tracked (exceeds 100+ target)
+- 20 years of historical NAV data (~3.6M records)
+- Microsoft Phi-2 model with LoRA fine-tuning implemented
+- FastAPI backend with REST API
+- Basic web interface for recommendations
+- SQLite database (historical_20y.db)
+
+Critical Gaps Identified:
+-------------------------
+1. No backtesting framework to validate model predictions
+2. No comprehensive model accuracy evaluation system
+3. No user authentication or portfolio management
+4. No real-time news and market updates
+5. Model not fully integrated (still using rule-based recommendations)
+
+Primary Goals:
+--------------
+1. Build robust backtesting framework (3 months to 10+ years timeframes)
+2. Implement comprehensive model evaluation metrics
+3. Add news aggregation portal with sentiment analysis
+4. Create user authentication system with portfolio tracking
+5. Implement AI-powered portfolio rebalancing recommendations
+6. Test model performance during economic crashes (2008, COVID-19)
+
+Estimated Timeline: 4-6 months with 2-3 person team
+Estimated Budget: $2,000-3,000 for APIs and infrastructure
+
+
+================================================================================
+2. CURRENT PROJECT ANALYSIS
+================================================================================
+
+Project Structure:
+------------------
+MF_Advisor_Project/
+├── api/
+│   └── app.py                          # FastAPI application
+├── src/
+│   ├── historical_data_collector.py    # Data collection (20 years)
+│   ├── enhanced_training.py            # LoRA fine-tuning
+│   ├── inference_stable.py             # AI recommendations
+│   └── config.py                       # Configuration
+├── web/
+│   ├── index.html                      # Frontend
+│   └── static/                         # JS/CSS
+├── data/                               # Data storage
+├── models/                             # Trained models
+└── logs/                               # Application logs
+
+Current Capabilities:
+---------------------
+✓ Collects 20-year historical NAV data for 200+ funds
+✓ Uses Microsoft Phi-2 model (2B parameters) with LoRA fine-tuning
+✓ Basic web interface for investment recommendations
+✓ Supports multiple risk profiles (Low/Moderate/High)
+✓ Generates 3 different strategy options per user query
+✓ Uses MFapi.in for Indian mutual fund data
+
+Current Limitations:
+--------------------
+✗ No backtesting framework
+✗ No user authentication or portfolio management
+✗ No news aggregation
+✗ No model accuracy testing framework
+✗ Currently using rule-based recommendations (model not fully integrated)
+✗ Using SQLite (not scalable for production with multiple users)
+✗ No portfolio rebalancing recommendations
+✗ No performance tracking dashboard
+
+
+================================================================================
+3. DATA COLLECTION STRATEGY (100+ FUNDS, 5+ YEARS)
+================================================================================
+
+CURRENT STATUS: ALREADY EXCEEDS REQUIREMENTS
+---------------------------------------------
+✓ Currently tracking: 200+ funds
+✓ Historical data: 20 years (far exceeds 5-year requirement)
+✓ Data source: MFapi.in (free, reliable, daily updates)
+✓ Data quality: ~3.6M NAV records
+
+Recommended Data Sources:
+-------------------------
+
+PRIMARY SOURCE: MFapi.in (CURRENTLY IN USE)
+- Coverage: All Indian mutual funds (1400+ schemes)
+- Historical Data: Complete NAV history available
+- API Format: RESTful JSON
+- Cost: FREE
+- Update Frequency: Daily automatic updates
+- Endpoints:
+  * GET https://api.mfapi.in/mf - List all schemes
+  * GET https://api.mfapi.in/mf/{scheme_code} - Full history
+
+BACKUP SOURCE 1: mftool (Python Library)
+Install: pip install mftool
+- Released: March 2025
+- Supports: AMFI, BSE, and NSE data
+- Returns: DataFrame, JSON, dictionary formats
+- Use case: Cross-validation of primary data
+
+BACKUP SOURCE 2: India Mutual Funds API
+- URL: https://mf.captnemo.in/
+- Uses ISIN numbers for fund identification
+- Use case: Data validation and gap filling
+
+COMMERCIAL OPTION (if budget allows): EODHD
+- Comprehensive fundamental data
+- 20+ years of historical data
+- Cost: $79/month for Indian market data
+- Use case: Premium features, corporate actions data
+
+Fund Categories to Include:
+----------------------------
+Category                    Target Count    Current Status
+---------------------------------------------------------------
+Large Cap Equity            20 funds        ✓ Covered
+Mid Cap Equity              20 funds        ✓ Covered
+Small Cap Equity            15 funds        ✓ Covered
+Multi Cap / Flexi Cap       15 funds        ✓ Covered
+Debt Funds                  15 funds        ✓ Covered
+Hybrid Funds                10 funds        ✓ Covered
+Thematic/Sectoral           10 funds        ✓ Covered
+ELSS (Tax Saving)           5 funds         ✓ Covered
+---------------------------------------------------------------
+TOTAL:                      110+ funds      200+ AVAILABLE
+
+Critical Time Periods to Include:
+----------------------------------
+Period                      Significance                Status
+---------------------------------------------------------------
+2008 Financial Crisis       Global market crash         Need to extend data
+2013-2014 Taper Tantrum     Emerging market crisis      ✓ Have data
+2016 Demonetization         India-specific event        ✓ Have data
+2020 COVID-19 Crash         Recent crisis (critical)    ✓ Have data
+2020-2021 Recovery          Post-COVID rally            ✓ Have data
+2022 Market Correction      Interest rate impact        ✓ Have data
+2024-2025 Current           Latest data                 ✓ Have data
+
+RECOMMENDATION: Your current data collection is EXCELLENT. Focus on:
+1. Data quality validation (check for gaps, outliers)
+2. Adding data versioning/metadata tracking
+3. Implementing automated quality checks
+4. Cross-validation with backup sources
+
+Data Quality Improvements:
+---------------------------
+
+CODE IMPLEMENTATION:
+
+# src/data_quality_validator.py
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+
+class DataQualityValidator:
+    """Validate and ensure data quality for mutual fund NAV data"""
+
+    def __init__(self, data_source='mfapi.in'):
+        self.data_source = data_source
+        self.quality_report = {}
+
+    def validate_data_quality(self, df, scheme_code):
+        """Comprehensive data quality checks"""
+
+        results = {
+            'scheme_code': scheme_code,
+            'total_records': len(df),
+            'date_range': f"{df['date'].min()} to {df['date'].max()}",
+            'checks': {}
+        }
+
+        # 1. Check for missing values
+        missing_pct = (df.isnull().sum() / len(df) * 100).to_dict()
+        results['checks']['missing_values'] = missing_pct
+
+        # 2. Check for outliers (>50% daily change likely error)
+        df['daily_change'] = df['nav'].pct_change()
+        outliers = df[abs(df['daily_change']) > 0.5]
+        results['checks']['outliers'] = len(outliers)
+
+        # 3. Verify date continuity (check for gaps > 5 days)
+        df['date'] = pd.to_datetime(df['date'])
+        df = df.sort_values('date')
+        df['date_diff'] = df['date'].diff().dt.days
+        gaps = df[df['date_diff'] > 5]
+        results['checks']['date_gaps'] = len(gaps)
+
+        # 4. Check for duplicate dates
+        duplicates = df[df.duplicated(subset=['date'], keep=False)]
+        results['checks']['duplicate_dates'] = len(duplicates)
+
+        # 5. Validate NAV values (should be positive)
+        invalid_nav = df[df['nav'] <= 0]
+        results['checks']['invalid_nav_values'] = len(invalid_nav)
+
+        # 6. Check data freshness (last update within 3 days?)
+        last_date = df['date'].max()
+        days_since_update = (datetime.now() - last_date).days
+        results['checks']['days_since_last_update'] = days_since_update
+
+        # Overall quality score (0-100)
+        score = 100
+        if missing_pct.get('nav', 0) > 1: score -= 20
+        if len(outliers) > 0: score -= 15
+        if len(gaps) > 10: score -= 15
+        if len(duplicates) > 0: score -= 10
+        if len(invalid_nav) > 0: score -= 20
+        if days_since_update > 3: score -= 10
+
+        results['quality_score'] = max(0, score)
+        results['status'] = 'PASS' if score >= 70 else 'FAIL'
+
+        return results
+
+    def cross_validate_with_backup(self, primary_data, backup_data):
+        """Cross-validate data from multiple sources"""
+
+        # Merge on date
+        merged = pd.merge(primary_data, backup_data,
+                         on='date', suffixes=('_primary', '_backup'))
+
+        # Calculate difference
+        merged['nav_diff'] = abs(merged['nav_primary'] - merged['nav_backup'])
+        merged['nav_diff_pct'] = (merged['nav_diff'] / merged['nav_primary']) * 100
+
+        # Flag discrepancies (>1% difference)
+        discrepancies = merged[merged['nav_diff_pct'] > 1]
+
+        return {
+            'total_compared': len(merged),
+            'discrepancies': len(discrepancies),
+            'avg_difference_pct': merged['nav_diff_pct'].mean(),
+            'max_difference_pct': merged['nav_diff_pct'].max(),
+            'data_agreement': (1 - len(discrepancies)/len(merged)) * 100
+        }
+
+    def generate_data_metadata(self, df):
+        """Generate metadata for dataset versioning"""
+
+        return {
+            'collection_date': datetime.now().isoformat(),
+            'data_source': self.data_source,
+            'num_funds': df['scheme_code'].nunique(),
+            'total_records': len(df),
+            'date_range': {
+                'start': df['date'].min().isoformat(),
+                'end': df['date'].max().isoformat(),
+                'years': (df['date'].max() - df['date'].min()).days / 365.25
+            },
+            'data_version': 'v1.0',
+            'quality_score': self.validate_data_quality(df, 'overall')['quality_score']
+        }
+
+
+# Usage example:
+validator = DataQualityValidator()
+quality_report = validator.validate_data_quality(fund_data, scheme_code='119551')
+
+if quality_report['status'] == 'FAIL':
+    print(f"Data quality issues found for {scheme_code}:")
+    print(quality_report['checks'])
+
+
+Data Collection Best Practices:
+--------------------------------
+1. Run data quality validation daily
+2. Store metadata with each dataset version
+3. Implement alerting for data quality issues
+4. Keep backup of previous versions (rolling 30 days)
+5. Cross-validate with at least one backup source weekly
+6. Monitor API health and response times
+7. Implement retry logic with exponential backoff
+8. Cache data to reduce API calls
+
+
+================================================================================
+4. BACKTESTING FRAMEWORK IMPLEMENTATION
+================================================================================
+
+Overview:
+---------
+Backtesting is CRITICAL to validate model predictions and investment strategies
+before real-world deployment. This framework will test strategies across
+multiple timeframes and market conditions including economic crashes.
+
+Recommended Library: bt (Flexible Backtesting for Python)
+----------------------------------------------------------
+
+WHY bt over alternatives?
+- Specifically designed for portfolio strategies
+- Built-in rebalancing algorithms
+- Multi-asset support (perfect for mutual funds)
+- Easier learning curve than Backtrader
+- Active development and community
+- Pythonic, intuitive API
+
+Installation:
+pip install bt
+pip install quantstats  # For performance reporting
+
+Alternative Options:
+- VectorBT: Faster (vectorized), but steeper learning curve
+- Backtrader: Industry standard, but more complex API
+
+Core Backtesting Strategy:
+---------------------------
+
+TIMEFRAME TESTING:
+1. Short-term (3 months): Test momentum strategies, rapid rebalancing
+2. Medium-term (6 months): Quarterly rebalancing
+3. Medium-term (1 year): Semi-annual rebalancing
+4. Long-term (3 years): Annual rebalancing
+5. Long-term (5 years): Buy-and-hold comparison
+6. Very long-term (10+ years): Long-term wealth creation
+
+MARKET SCENARIO TESTING:
+1. COVID-19 Crash (Feb-March 2020) - MOST CRITICAL
+   - Peak: Feb 19, 2020 (Nifty 50: 12,430)
+   - Trough: March 24, 2020 (Nifty 50: 7,511) - 40% drop
+   - Recovery: 6 months to pre-COVID levels
+   - Test: Model's response to sudden extreme volatility
+
+2. 2022 Market Correction
+   - Gradual 20% correction over 6 months
+   - Interest rate impact
+   - Test: Response to gradual downturn
+
+3. 2016 Demonetization (India-specific)
+   - Short-term disruption (2-3 months)
+   - Test: Model's handling of India-specific events
+
+4. Bull Market (2020-2021 Recovery)
+   - Rapid growth phase
+   - Test: Not overweighting during euphoria
+
+Implementation Code:
+--------------------
+
+# backtesting/mf_backtest_engine.py
+import bt
+import pandas as pd
+import numpy as np
+import quantstats as qs
+from datetime import datetime, timedelta
+
+class MutualFundBacktester:
+    """
+    Comprehensive backtesting engine for mutual fund strategies
+    """
+
+    def __init__(self, historical_data_path, benchmark_data_path=None):
+        """
+        Initialize backtester
+
+        Args:
+            historical_data_path: Path to historical NAV data (CSV)
+            benchmark_data_path: Path to benchmark data (e.g., Nifty 50)
+        """
+        self.data = self.load_data(historical_data_path)
+        self.benchmark = self.load_benchmark(benchmark_data_path)
+        self.results = {}
+
+    def load_data(self, path):
+        """Load and prepare historical NAV data"""
+        df = pd.read_csv(path, parse_dates=['date'])
+
+        # Pivot to get funds as columns
+        pivot_df = df.pivot(index='date', columns='scheme_name', values='nav')
+
+        # Calculate returns
+        returns_df = pivot_df.pct_change().fillna(0)
+
+        return {
+            'prices': pivot_df,
+            'returns': returns_df
+        }
+
+    def load_benchmark(self, path):
+        """Load benchmark data (Nifty 50)"""
+        if path is None:
+            return None
+        df = pd.read_csv(path, parse_dates=['date'], index_col='date')
+        return df['close']
+
+    def create_equal_weight_strategy(self, funds_list, rebalance_freq='quarterly'):
+        """
+        Equal weight strategy with periodic rebalancing
+
+        Args:
+            funds_list: List of fund names to include
+            rebalance_freq: 'monthly', 'quarterly', 'yearly'
+        """
+        # Select data for chosen funds
+        data = self.data['prices'][funds_list]
+
+        # Define rebalancing frequency
+        rebalance_algos = {
+            'monthly': bt.algos.RunMonthly(),
+            'quarterly': bt.algos.RunQuarterly(),
+            'yearly': bt.algos.RunYearly()
+        }
+
+        # Create strategy
+        strategy = bt.Strategy(
+            f'EqualWeight_{rebalance_freq}',
+            [
+                rebalance_algos[rebalance_freq],
+                bt.algos.SelectAll(),
+                bt.algos.WeighEqually(),
+                bt.algos.Rebalance()
+            ]
+        )
+
+        return bt.Backtest(strategy, data)
+
+    def create_model_based_strategy(self, model_predictions, rebalance_freq='quarterly'):
+        """
+        Strategy based on AI model predictions
+
+        Args:
+            model_predictions: DataFrame with predicted returns/scores
+            rebalance_freq: Rebalancing frequency
+        """
+        # Custom algo to weight based on model predictions
+        class WeighByModelPrediction(bt.Algo):
+            def __init__(self, predictions):
+                super(WeighByModelPrediction, self).__init__()
+                self.predictions = predictions
+
+            def __call__(self, target):
+                # Get predictions for current date
+                current_date = target.now
+                if current_date not in self.predictions.index:
+                    return True
+
+                pred = self.predictions.loc[current_date]
+
+                # Normalize to weights (only positive predictions)
+                pred_positive = pred[pred > 0]
+                if len(pred_positive) == 0:
+                    return True
+
+                weights = pred_positive / pred_positive.sum()
+                target.temp['weights'] = weights
+
+                return True
+
+        rebalance_algos = {
+            'monthly': bt.algos.RunMonthly(),
+            'quarterly': bt.algos.RunQuarterly(),
+            'yearly': bt.algos.RunYearly()
+        }
+
+        strategy = bt.Strategy(
+            f'ModelBased_{rebalance_freq}',
+            [
+                rebalance_algos[rebalance_freq],
+                WeighByModelPrediction(model_predictions),
+                bt.algos.Rebalance()
+            ]
+        )
+
+        data = self.data['prices'][model_predictions.columns]
+        return bt.Backtest(strategy, data)
+
+    def run_timeframe_tests(self, strategy_name='equal_weight'):
+        """
+        Run backtests across multiple timeframes
+        """
+        results = {}
+
+        # Define timeframes (end date is most recent)
+        end_date = self.data['prices'].index.max()
+
+        timeframes = {
+            '3_months': end_date - timedelta(days=90),
+            '6_months': end_date - timedelta(days=180),
+            '1_year': end_date - timedelta(days=365),
+            '3_years': end_date - timedelta(days=365*3),
+            '5_years': end_date - timedelta(days=365*5),
+            '10_years': end_date - timedelta(days=365*10)
+        }
+
+        # Select top 10 funds (example)
+        top_funds = self.data['returns'].mean().nlargest(10).index.tolist()
+
+        for period_name, start_date in timeframes.items():
+            # Filter data for this timeframe
+            period_data = self.data['prices'][
+                (self.data['prices'].index >= start_date) &
+                (self.data['prices'].index <= end_date)
+            ]
+
+            if len(period_data) < 30:  # Skip if insufficient data
+                continue
+
+            # Create and run backtest
+            backtest = self.create_equal_weight_strategy(
+                top_funds,
+                rebalance_freq='quarterly'
+            )
+
+            result = bt.run(backtest)
+            results[period_name] = result
+
+        return results
+
+    def test_crisis_scenarios(self):
+        """
+        Test strategy performance during market crashes
+        """
+        crisis_periods = {
+            'covid_crash_and_recovery': {
+                'start': '2019-01-01',
+                'end': '2021-12-31',
+                'description': 'COVID-19 crash (Feb-Mar 2020) and recovery'
+            },
+            'covid_crash_only': {
+                'start': '2020-01-01',
+                'end': '2020-06-30',
+                'description': 'COVID-19 crash period only'
+            },
+            '2022_correction': {
+                'start': '2022-01-01',
+                'end': '2022-12-31',
+                'description': '2022 market correction'
+            },
+            'demonetization': {
+                'start': '2016-09-01',
+                'end': '2017-03-31',
+                'description': '2016 demonetization impact'
+            }
+        }
+
+        results = {}
+        top_funds = self.data['returns'].mean().nlargest(10).index.tolist()
+
+        for crisis_name, period_info in crisis_periods.items():
+            # Filter data
+            crisis_data = self.data['prices'][
+                (self.data['prices'].index >= period_info['start']) &
+                (self.data['prices'].index <= period_info['end'])
+            ]
+
+            if len(crisis_data) < 30:
+                continue
+
+            # Run backtest
+            backtest = self.create_equal_weight_strategy(
+                top_funds,
+                rebalance_freq='monthly'  # Monthly rebalancing during crisis
+            )
+
+            result = bt.run(backtest)
+            results[crisis_name] = {
+                'result': result,
+                'description': period_info['description']
+            }
+
+        return results
+
+    def calculate_performance_metrics(self, backtest_result):
+        """
+        Calculate comprehensive performance metrics
+        """
+        returns = backtest_result.returns
+
+        # Basic metrics
+        total_return = (backtest_result.prices.iloc[-1] /
+                       backtest_result.prices.iloc[0] - 1) * 100
+
+        # Annualized return
+        years = (backtest_result.prices.index[-1] -
+                backtest_result.prices.index[0]).days / 365.25
+        annualized_return = ((1 + total_return/100) ** (1/years) - 1) * 100
+
+        # Volatility (annualized)
+        volatility = returns.std() * np.sqrt(252) * 100
+
+        # Sharpe Ratio (assuming 6.5% risk-free rate for India)
+        risk_free_rate = 0.065
+        sharpe_ratio = (annualized_return/100 - risk_free_rate) / (volatility/100)
+
+        # Maximum Drawdown
+        cumulative = (1 + returns).cumprod()
+        running_max = cumulative.expanding().max()
+        drawdown = (cumulative - running_max) / running_max
+        max_drawdown = drawdown.min() * 100
+
+        # Sortino Ratio (downside deviation)
+        downside_returns = returns[returns < 0]
+        downside_std = downside_returns.std() * np.sqrt(252)
+        sortino_ratio = (annualized_return/100 - risk_free_rate) / downside_std
+
+        # Calmar Ratio
+        calmar_ratio = (annualized_return/100) / abs(max_drawdown/100)
+
+        # Win rate
+        win_rate = (returns > 0).sum() / len(returns) * 100
+
+        return {
+            'total_return': round(total_return, 2),
+            'annualized_return': round(annualized_return, 2),
+            'volatility': round(volatility, 2),
+            'sharpe_ratio': round(sharpe_ratio, 2),
+            'max_drawdown': round(max_drawdown, 2),
+            'sortino_ratio': round(sortino_ratio, 2),
+            'calmar_ratio': round(calmar_ratio, 2),
+            'win_rate': round(win_rate, 2),
+            'total_trades': len(returns),
+            'start_date': backtest_result.prices.index[0],
+            'end_date': backtest_result.prices.index[-1]
+        }
+
+    def generate_html_report(self, backtest_result, output_path='backtest_report.html'):
+        """
+        Generate comprehensive HTML report using quantstats
+        """
+        returns = backtest_result.returns
+
+        if self.benchmark is not None:
+            qs.reports.html(returns, self.benchmark, output=output_path)
+        else:
+            qs.reports.html(returns, output=output_path)
+
+        print(f"Report generated: {output_path}")
+
+    def compare_strategies(self, strategies_dict):
+        """
+        Compare multiple strategies side-by-side
+
+        Args:
+            strategies_dict: Dict of {strategy_name: backtest_result}
+        """
+        comparison = {}
+
+        for name, result in strategies_dict.items():
+            metrics = self.calculate_performance_metrics(result)
+            comparison[name] = metrics
+
+        # Create comparison DataFrame
+        comparison_df = pd.DataFrame(comparison).T
+
+        # Highlight best performers
+        comparison_df['rank_sharpe'] = comparison_df['sharpe_ratio'].rank(ascending=False)
+        comparison_df['rank_return'] = comparison_df['annualized_return'].rank(ascending=False)
+        comparison_df['rank_drawdown'] = comparison_df['max_drawdown'].rank(ascending=True)
+
+        return comparison_df
+
+
+# Usage Example:
+# --------------
+
+# Initialize backtester
+backtester = MutualFundBacktester(
+    historical_data_path='data/historical_20y.csv',
+    benchmark_data_path='data/nifty50.csv'
+)
+
+# Test 1: Multiple timeframes
+print("Running multi-timeframe backtests...")
+timeframe_results = backtester.run_timeframe_tests()
+
+for period, result in timeframe_results.items():
+    metrics = backtester.calculate_performance_metrics(result)
+    print(f"\n{period.upper()} Performance:")
+    print(f"  Total Return: {metrics['total_return']}%")
+    print(f"  Sharpe Ratio: {metrics['sharpe_ratio']}")
+    print(f"  Max Drawdown: {metrics['max_drawdown']}%")
+
+# Test 2: Crisis scenarios
+print("\nTesting crisis scenarios...")
+crisis_results = backtester.test_crisis_scenarios()
+
+for crisis, data in crisis_results.items():
+    metrics = backtester.calculate_performance_metrics(data['result'])
+    print(f"\n{crisis.upper()}: {data['description']}")
+    print(f"  Total Return: {metrics['total_return']}%")
+    print(f"  Max Drawdown: {metrics['max_drawdown']}%")
+
+# Test 3: Generate HTML report
+backtester.generate_html_report(
+    timeframe_results['5_years'],
+    output_path='reports/5year_backtest.html'
+)
+
+
+Target Performance Benchmarks:
+-------------------------------
+Metric                  Target      Good        Excellent
+----------------------------------------------------------------
+Sharpe Ratio            > 1.0       > 1.5       > 2.0
+Annualized Return       > 12%       > 15%       > 18%
+Max Drawdown            < 30%       < 25%       < 20%
+Sortino Ratio           > 1.5       > 2.0       > 2.5
+Win Rate                > 55%       > 60%       > 65%
+Calmar Ratio            > 0.5       > 1.0       > 1.5
+
+Benchmark Comparison:
+- Should outperform Nifty 50 by at least 3% annually
+- Should have better Sharpe ratio than index
+- Should have lower drawdown during crashes
+
+
+================================================================================
+5. MODEL TRAINING & ACCURACY TESTING
+================================================================================
+
+Current Model: Microsoft Phi-2 (2B parameters) with LoRA
+----------------------------------------------------------
+
+Your Current Setup:
+- Model: microsoft/phi-2
+- Fine-tuning: LoRA (Low-Rank Adaptation)
+- LoRA config: r=16, alpha=32, dropout=0.1
+- Training data: Historical fund performance patterns
+
+RECOMMENDATION: Consider Gemma as Alternative
+----------------------------------------------
+
+Option 1: Continue with Phi-2 (Current)
+Pros:
++ Already implemented and working
++ 2B parameters (fast inference)
++ Good for financial reasoning
++ Lower resource requirements
+
+Option 2: Switch to Gemma-2B
+Pros:
++ Specifically designed for financial tasks
++ Better numerical reasoning
++ More recent training data (2024)
++ Official Google support
+Cons:
+- Requires retraining
+- Similar resource requirements
+
+Installation (if switching):
+pip install transformers accelerate peft
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+model_name = "google/gemma-2b"  # or gemma-7b for better accuracy
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForCausalLM.from_pretrained(model_name)
+
+LoRA Configuration Best Practices:
+-----------------------------------
+
+Your Current Config (Good):
+lora_config = LoraConfig(
+    r=16,                  # LoRA rank - GOOD
+    lora_alpha=32,         # Scaling factor - OPTIMAL
+    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+    lora_dropout=0.1,      # Prevent overfitting
+    bias="none",
+    task_type=TaskType.CAUSAL_LM,
+)
+
+Recommended Improvements:
+-------------------------
+
+1. ADD MLP LAYERS to target modules:
+target_modules = [
+    "q_proj", "k_proj", "v_proj", "o_proj",  # Attention layers
+    "up_proj", "down_proj"                    # MLP layers (NEW)
+]
+
+2. EXPERIMENT with rank (r):
+- Start with r=4-8 for faster training
+- Increase to r=16 if underfitting (your current setting is good)
+- Try r=32 for complex financial patterns
+
+3. LEARNING RATE optimization:
+- Your current 5e-5 is optimal
+- Use warmup (you already have 100 steps - good!)
+- Consider cosine learning rate scheduling
+
+Improved Training Data Format:
+-------------------------------
+
+CRITICAL: High-quality training data is more important than model size!
+
+Current approach: Likely basic NAV predictions
+Recommended: Rich contextual data with reasoning
+
+EXAMPLE TRAINING FORMAT:
+
+[CONTEXT]
+Fund Name: HDFC Top 100 Fund
+Scheme Code: 119551
+Category: Large Cap Equity
+Current NAV: 750.23
+Asset Size: 25,000 Cr
+Expense Ratio: 1.15%
+Fund Manager: XYZ (8 years experience)
+
+[RECENT PERFORMANCE]
+1-day Return: +0.8%
+7-day Return: +2.1%
+30-day Return: +5.3%
+90-day Return: +8.7%
+1-year Return: +15.3%
+3-year Return (annualized): +12.8%
+
+[RISK METRICS]
+Volatility (30-day): 12.5%
+Sharpe Ratio (1-year): 1.8
+Beta (vs Nifty 50): 0.95
+Maximum Drawdown (1-year): -18.2%
+
+[MARKET CONDITIONS]
+Market Phase: Bull Market
+Nifty 50 (today): +1.2%
+Nifty 50 (30-day): +4.8%
+India VIX: 15.3 (Low volatility)
+Interest Rates: Stable
+FII Flow: Positive (+$2B this month)
+
+[HOLDINGS ANALYSIS]
+Top 3 Holdings:
+1. Reliance Industries (8.5%)
+2. HDFC Bank (7.2%)
+3. Infosys (6.8%)
+Sector Allocation: Banking (25%), IT (20%), Energy (15%)
+
+[HISTORICAL PATTERN]
+Similar market conditions in Q2 2019:
+- Fund returned +18% over next 6 months
+- Nifty 50 returned +14% in same period
+- Outperformance: +4%
+
+[ECONOMIC INDICATORS]
+GDP Growth: 7.2%
+Inflation: 5.1%
+Unemployment: 6.8%
+Sentiment: Positive
+
+[QUESTION]
+Based on current market conditions, fund performance, and historical patterns,
+predict the expected 3-month return and provide investment recommendation.
+
+[ANSWER]
+Expected 3-month return: +6% to +8% (75% confidence)
+Risk level: Moderate
+Recommendation: BUY
+Investment horizon: Medium-term (6-12 months)
+Suggested allocation: 30-40% for balanced portfolio
+
+Reasoning:
+1. Strong recent momentum (+8.7% in 90 days) indicates positive trend
+2. Low volatility (VIX: 15.3) suggests stable market conditions
+3. Fund has historically outperformed in similar market phases
+4. Sharpe ratio of 1.8 indicates good risk-adjusted returns
+5. Large cap focus provides stability during current bull phase
+6. Positive FII flows support continued market strength
+7. Beta < 1.0 offers downside protection if market corrects
+
+Risks to consider:
+- Market at elevated levels (potential correction)
+- Global economic uncertainty
+- Recommend stop-loss at -8% from entry
+
+Alternative scenarios:
+- Bear case (30% probability): -2% to 0% return if market corrects
+- Bull case (20% probability): +10% to +12% if rally continues
+- Base case (50% probability): +6% to +8% steady growth
+
+
+This rich format helps model learn:
+- Pattern recognition across multiple dimensions
+- Risk-reward assessment
+- Market condition interpretation
+- Reasoning and explanation generation
+
+Training Data Generator Code:
+------------------------------
+
+# src/advanced_training_data_generator.py
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+import json
+
+class AdvancedTrainingDataGenerator:
+    """
+    Generate high-quality training data for financial LLM
+    """
+
+    def __init__(self, historical_db_path):
+        self.historical_data = pd.read_csv(historical_db_path)
+        self.nifty_data = None  # Load separately
+        self.vix_data = None
+
+    def calculate_returns(self, nav_series, periods=[1, 7, 30, 90, 365]):
+        """Calculate returns for multiple periods"""
+        returns = {}
+        for period in periods:
+            if len(nav_series) > period:
+                returns[f'{period}day'] = (
+                    (nav_series.iloc[-1] / nav_series.iloc[-period] - 1) * 100
+                )
+        return returns
+
+    def calculate_risk_metrics(self, returns_series):
+        """Calculate volatility, Sharpe, etc."""
+        volatility = returns_series.std() * np.sqrt(252) * 100
+        sharpe = (returns_series.mean() * 252 - 0.065) / (volatility / 100)
+        max_dd = ((returns_series.cumsum() -
+                  returns_series.cumsum().expanding().max()).min())
+
+        return {
+            'volatility': round(volatility, 2),
+            'sharpe': round(sharpe, 2),
+            'max_drawdown': round(max_dd * 100, 2)
+        }
+
+    def determine_market_phase(self, nifty_returns):
+        """Classify market as bull/bear/sideways"""
+        if nifty_returns['30day'] > 5:
+            return 'Bull Market'
+        elif nifty_returns['30day'] < -5:
+            return 'Bear Market'
+        else:
+            return 'Sideways Market'
+
+    def find_similar_historical_pattern(self, current_conditions):
+        """Find similar market conditions in history"""
+        # Machine learning approach to find similar patterns
+        # (simplified version here)
+        return {
+            'period': 'Q2 2019',
+            'similarity': 0.85,
+            'outcome': '+18% over 6 months'
+        }
+
+    def generate_training_example(self, scheme_code, as_of_date):
+        """
+        Generate single rich training example
+        """
+        # Get fund data
+        fund_data = self.historical_data[
+            (self.historical_data['scheme_code'] == scheme_code) &
+            (self.historical_data['date'] <= as_of_date)
+        ].sort_values('date')
+
+        if len(fund_data) < 365:  # Need at least 1 year
+            return None
+
+        # Calculate metrics
+        nav_series = fund_data['nav']
+        returns = self.calculate_returns(nav_series)
+        risk_metrics = self.calculate_risk_metrics(
+            fund_data.set_index('date')['nav'].pct_change()
+        )
+
+        # Market conditions
+        nifty_returns = self.calculate_returns(self.nifty_data['close'])
+        market_phase = self.determine_market_phase(nifty_returns)
+
+        # Generate prompt
+        prompt = f"""[CONTEXT]
+Fund Name: {fund_data.iloc[-1]['scheme_name']}
+Scheme Code: {scheme_code}
+Category: {fund_data.iloc[-1]['category']}
+Current NAV: {nav_series.iloc[-1]:.2f}
+
+[RECENT PERFORMANCE]
+30-day Return: {returns.get('30day', 0):.2f}%
+90-day Return: {returns.get('90day', 0):.2f}%
+1-year Return: {returns.get('365day', 0):.2f}%
+
+[RISK METRICS]
+Volatility (30-day): {risk_metrics['volatility']:.2f}%
+Sharpe Ratio: {risk_metrics['sharpe']:.2f}
+Maximum Drawdown: {risk_metrics['max_drawdown']:.2f}%
+
+[MARKET CONDITIONS]
+Market Phase: {market_phase}
+Nifty 50 (30-day): {nifty_returns.get('30day', 0):.2f}%
+India VIX: {self.vix_data.iloc[-1]['vix']:.2f}
+
+[QUESTION]
+Predict 3-month expected return and provide recommendation.
+
+[ANSWER]
+"""
+
+        # Generate answer based on actual future performance
+        future_data = self.historical_data[
+            (self.historical_data['scheme_code'] == scheme_code) &
+            (self.historical_data['date'] > as_of_date) &
+            (self.historical_data['date'] <= as_of_date + timedelta(days=90))
+        ]
+
+        if len(future_data) > 0:
+            actual_return = (
+                (future_data.iloc[-1]['nav'] / nav_series.iloc[-1] - 1) * 100
+            )
+
+            # Generate recommendation
+            if actual_return > 8:
+                recommendation = "STRONG BUY"
+            elif actual_return > 4:
+                recommendation = "BUY"
+            elif actual_return > -2:
+                recommendation = "HOLD"
+            else:
+                recommendation = "SELL"
+
+            answer = f"""Expected 3-month return: {actual_return:.2f}%
+Recommendation: {recommendation}
+Risk level: {'High' if risk_metrics['volatility'] > 20 else 'Moderate' if risk_metrics['volatility'] > 12 else 'Low'}
+
+Reasoning:
+1. Recent momentum: {returns.get('90day', 0):.1f}% in last 90 days
+2. Market phase: {market_phase}
+3. Risk-adjusted returns (Sharpe): {risk_metrics['sharpe']:.2f}
+4. Volatility: {risk_metrics['volatility']:.1f}%
+"""
+
+            return {
+                'prompt': prompt,
+                'completion': answer,
+                'metadata': {
+                    'scheme_code': scheme_code,
+                    'as_of_date': as_of_date,
+                    'actual_return': actual_return
+                }
+            }
+
+        return None
+
+    def generate_dataset(self, num_examples=10000):
+        """Generate complete training dataset"""
+
+        examples = []
+        unique_funds = self.historical_data['scheme_code'].unique()
+
+        for scheme_code in unique_funds:
+            fund_dates = self.historical_data[
+                self.historical_data['scheme_code'] == scheme_code
+            ]['date'].unique()
+
+            # Sample random dates for this fund
+            sample_dates = np.random.choice(
+                fund_dates[:-90],  # Exclude last 90 days
+                size=min(50, len(fund_dates) - 90),
+                replace=False
+            )
+
+            for date in sample_dates:
+                example = self.generate_training_example(scheme_code, date)
+                if example:
+                    examples.append(example)
+
+                if len(examples) >= num_examples:
+                    break
+
+            if len(examples) >= num_examples:
+                break
+
+        return examples
+
+    def save_dataset(self, examples, output_path='training_data.jsonl'):
+        """Save in JSONL format for training"""
+        with open(output_path, 'w') as f:
+            for example in examples:
+                json.dump(example, f)
+                f.write('\n')
+
+
+# Usage:
+generator = AdvancedTrainingDataGenerator('data/historical_20y.csv')
+training_examples = generator.generate_dataset(num_examples=10000)
+generator.save_dataset(training_examples, 'data/training_enhanced.jsonl')
+
+
+Model Evaluation Framework:
+----------------------------
+
+# evaluation/model_evaluator.py
+import numpy as np
+import pandas as pd
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from scipy.stats import spearmanr
+import matplotlib.pyplot as plt
+
+class ModelPerformanceEvaluator:
+    """
+    Comprehensive evaluation of model predictions
+    """
+
+    def __init__(self):
+        self.risk_free_rate = 0.065  # India government bonds
+        self.predictions = []
+        self.actuals = []
+
+    def add_prediction(self, predicted, actual, metadata=None):
+        """Add prediction-actual pair"""
+        self.predictions.append({
+            'predicted': predicted,
+            'actual': actual,
+            'metadata': metadata or {}
+        })
+
+    def calculate_prediction_metrics(self):
+        """Calculate accuracy metrics"""
+
+        y_pred = np.array([p['predicted'] for p in self.predictions])
+        y_true = np.array([p['actual'] for p in self.predictions])
+
+        # Root Mean Squared Error
+        rmse = np.sqrt(mean_squared_error(y_true, y_pred))
+
+        # Mean Absolute Error
+        mae = mean_absolute_error(y_true, y_pred)
+
+        # Mean Absolute Percentage Error
+        mape = np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+
+        # R² Score
+        r2 = r2_score(y_true, y_pred)
+
+        # Directional Accuracy
+        directional_accuracy = self.calculate_directional_accuracy(y_pred, y_true)
+
+        # Spearman Correlation (ranking)
+        spearman_corr, _ = spearmanr(y_true, y_pred)
+
+        return {
+            'rmse': round(rmse, 4),
+            'mae': round(mae, 4),
+            'mape': round(mape, 2),
+            'r2_score': round(r2, 4),
+            'directional_accuracy': round(directional_accuracy, 2),
+            'spearman_correlation': round(spearman_corr, 4)
+        }
+
+    def calculate_directional_accuracy(self, y_pred, y_true):
+        """
+        Percentage of times model correctly predicted direction
+        (positive vs negative return)
+        """
+        pred_direction = np.sign(y_pred)
+        true_direction = np.sign(y_true)
+
+        correct = np.sum(pred_direction == true_direction)
+        total = len(y_pred)
+
+        return (correct / total) * 100
+
+    def calculate_sharpe_ratio(self, returns):
+        """Calculate Sharpe ratio of portfolio based on predictions"""
+        excess_returns = returns - self.risk_free_rate
+        sharpe = (np.mean(excess_returns) / np.std(excess_returns)) * np.sqrt(252)
+        return sharpe
+
+    def calculate_information_ratio(self, returns, benchmark_returns):
+        """Information ratio vs benchmark"""
+        excess_returns = returns - benchmark_returns
+        tracking_error = np.std(excess_returns)
+
+        if tracking_error == 0:
+            return 0
+
+        return np.mean(excess_returns) / tracking_error * np.sqrt(252)
+
+    def backtest_on_predictions(self):
+        """
+        Simulate trading based on model predictions
+        """
+        # Sort predictions by confidence/expected return
+        sorted_preds = sorted(
+            self.predictions,
+            key=lambda x: x['predicted'],
+            reverse=True
+        )
+
+        # Select top 20% (quintile analysis)
+        top_quintile = sorted_preds[:len(sorted_preds)//5]
+        top_returns = [p['actual'] for p in top_quintile]
+
+        # Bottom quintile
+        bottom_quintile = sorted_preds[-len(sorted_preds)//5:]
+        bottom_returns = [p['actual'] for p in bottom_quintile]
+
+        return {
+            'top_quintile_avg_return': np.mean(top_returns),
+            'bottom_quintile_avg_return': np.mean(bottom_returns),
+            'quintile_spread': np.mean(top_returns) - np.mean(bottom_returns),
+            'top_quintile_sharpe': self.calculate_sharpe_ratio(
+                np.array(top_returns)/100
+            )
+        }
+
+    def generate_evaluation_report(self):
+        """Comprehensive evaluation report"""
+
+        print("=" * 70)
+        print("MODEL PERFORMANCE EVALUATION REPORT")
+        print("=" * 70)
+
+        # Prediction Metrics
+        metrics = self.calculate_prediction_metrics()
+        print("\n1. PREDICTION ACCURACY METRICS")
+        print("-" * 70)
+        print(f"RMSE:                    {metrics['rmse']:.4f}")
+        print(f"MAE:                     {metrics['mae']:.4f}")
+        print(f"MAPE:                    {metrics['mape']:.2f}%")
+        print(f"R² Score:                {metrics['r2_score']:.4f}")
+        print(f"Directional Accuracy:    {metrics['directional_accuracy']:.2f}%")
+        print(f"Spearman Correlation:    {metrics['spearman_correlation']:.4f}")
+
+        # Performance benchmarks
+        print("\n2. PERFORMANCE EVALUATION")
+        print("-" * 70)
+        if metrics['rmse'] < 5:
+            print("✓ RMSE: EXCELLENT (< 5%)")
+        elif metrics['rmse'] < 8:
+            print("✓ RMSE: GOOD (< 8%)")
+        else:
+            print("✗ RMSE: NEEDS IMPROVEMENT (> 8%)")
+
+        if metrics['directional_accuracy'] > 65:
+            print("✓ Directional Accuracy: EXCELLENT (> 65%)")
+        elif metrics['directional_accuracy'] > 55:
+            print("✓ Directional Accuracy: GOOD (> 55%)")
+        else:
+            print("✗ Directional Accuracy: NEEDS IMPROVEMENT (< 55%)")
+
+        # Quintile Analysis
+        quintile_results = self.backtest_on_predictions()
+        print("\n3. QUINTILE ANALYSIS (Top 20% vs Bottom 20%)")
+        print("-" * 70)
+        print(f"Top Quintile Avg Return:    {quintile_results['top_quintile_avg_return']:.2f}%")
+        print(f"Bottom Quintile Avg Return: {quintile_results['bottom_quintile_avg_return']:.2f}%")
+        print(f"Spread:                     {quintile_results['quintile_spread']:.2f}%")
+        print(f"Top Quintile Sharpe:        {quintile_results['top_quintile_sharpe']:.2f}")
+
+        print("\n" + "=" * 70)
+
+        return {
+            'accuracy_metrics': metrics,
+            'quintile_analysis': quintile_results
+        }
+
+
+# Usage Example:
+evaluator = ModelPerformanceEvaluator()
+
+# During backtesting/validation
+for test_sample in test_dataset:
+    prediction = model.predict(test_sample['features'])
+    actual = test_sample['actual_return']
+    evaluator.add_prediction(prediction, actual)
+
+# Generate report
+report = evaluator.generate_evaluation_report()
+
+
+Target Evaluation Metrics:
+---------------------------
+Metric                      Target      Good        Excellent
+------------------------------------------------------------------------
+RMSE                        < 8%        < 5%        < 3%
+MAE                         < 5%        < 3%        < 2%
+MAPE                        < 15%       < 10%       < 8%
+R² Score                    > 0.5       > 0.7       > 0.8
+Directional Accuracy        > 55%       > 65%       > 70%
+Spearman Correlation        > 0.6       > 0.7       > 0.8
+Top Quintile Sharpe         > 1.5       > 2.0       > 2.5
+
+Cross-Validation Strategy:
+--------------------------
+
+IMPORTANT: Traditional k-fold is WRONG for time series!
+Use Time Series Split (Walk-Forward Validation):
+
+from sklearn.model_selection import TimeSeriesSplit
+
+# 5-fold time series split
+tscv = TimeSeriesSplit(n_splits=5)
+
+results = []
+for train_idx, test_idx in tscv.split(data):
+    train_data = data.iloc[train_idx]
+    test_data = data.iloc[test_idx]
+
+    # Train model on train_data
+    model.fit(train_data)
+
+    # Evaluate on test_data
+    predictions = model.predict(test_data)
+    metrics = calculate_metrics(predictions, test_data['actual'])
+    results.append(metrics)
+
+# Average metrics across folds
+avg_rmse = np.mean([r['rmse'] for r in results])
+avg_directional = np.mean([r['directional_accuracy'] for r in results])
+
+This prevents data leakage (using future data to predict past).
+
+
+================================================================================
+6. NEWS & UPDATES PORTAL
+================================================================================
+
+Objective:
+----------
+Create a real-time news aggregation system that provides:
+1. Latest mutual fund news and market updates
+2. Daily top performers and losers
+3. Market sentiment analysis
+4. Fund-specific news mentions
+5. Regulatory updates from SEBI
+
+Recommended News APIs:
+----------------------
+
+PRIMARY: Alpha Vantage (RECOMMENDED)
+-------------------------------------
+pip install alpha-vantage
+
+Features:
+- News & Sentiment API
+- Real-time financial news
+- Built-in sentiment analysis
+- Global coverage with India news
+- Free tier: 25 requests/day
+- Paid tier: $49/month (500 requests/day)
+
+Sample Code:
+import requests
+
+def fetch_alpha_vantage_news(topics='financial_markets', tickers='NSE:NIFTY50'):
+    url = "https://www.alphavantage.co/query"
+    params = {
+        'function': 'NEWS_SENTIMENT',
+        'topics': topics,
+        'tickers': tickers,
+        'apikey': 'YOUR_API_KEY',
+        'limit': 50
+    }
+    response = requests.get(url, params=params)
+    return response.json()
+
+SECONDARY: NewsAPI
+-------------------
+pip install newsapi-python
+
+Features:
+- 80,000+ news sources
+- Free tier: 100 requests/day (development only)
+- Paid tier: $449/month (production)
+- Search by keywords
+
+Sample Code:
+from newsapi import NewsApiClient
+
+newsapi = NewsApiClient(api_key='YOUR_API_KEY')
+
+# Get mutual fund news
+news = newsapi.get_everything(
+    q='mutual fund India OR investment OR SEBI',
+    language='en',
+    sort_by='publishedAt',
+    page_size=50
+)
+
+TERTIARY: Web Scraping (Backup)
+--------------------------------
+Sources to scrape:
+1. MoneyControl.com - Mutual Funds section
+2. Value Research Online
+3. Economic Times - Mutual Fund section
+4. AMFI website - Announcements
+
+pip install beautifulsoup4 requests selenium
+
+Note: Respect robots.txt and rate limits!
+
+Implementation Architecture:
+-----------------------------
+
+# news_portal/news_aggregator.py
+import requests
+from datetime import datetime, timedelta
+from textblob import TextBlob
+from apscheduler.schedulers.background import BackgroundScheduler
+import sqlite3
+import json
+
+class NewsAggregator:
+    """
+    Aggregate news from multiple sources with sentiment analysis
+    """
+
+    def __init__(self, db_path='data/news.db'):
+        self.db_path = db_path
+        self.alpha_vantage_key = "YOUR_KEY"
+        self.newsapi_key = "YOUR_KEY"
+        self.scheduler = BackgroundScheduler()
+        self.init_database()
+
+    def init_database(self):
+        """Initialize news database"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS news_articles (
+                article_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                url TEXT UNIQUE NOT NULL,
+                source TEXT,
+                published_at TIMESTAMP,
+                content TEXT,
+                sentiment TEXT,
+                sentiment_score REAL,
+                mentioned_funds TEXT,
+                relevance_score REAL,
+                category TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS market_performance (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date DATE UNIQUE,
+                nifty_50_close REAL,
+                nifty_50_change REAL,
+                india_vix REAL,
+                top_performers TEXT,
+                top_losers TEXT,
+                market_sentiment TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
+        conn.commit()
+        conn.close()
+
+    def fetch_alpha_vantage_news(self):
+        """Fetch from Alpha Vantage"""
+        url = "https://www.alphavantage.co/query"
+        params = {
+            'function': 'NEWS_SENTIMENT',
+            'topics': 'financial_markets,economy_fiscal',
+            'tickers': 'NSE:NIFTY50',
+            'apikey': self.alpha_vantage_key,
+            'limit': 50
+        }
+
+        try:
+            response = requests.get(url, params=params, timeout=10)
+            data = response.json()
+
+            articles = []
+            for item in data.get('feed', []):
+                articles.append({
+                    'title': item.get('title'),
+                    'url': item.get('url'),
+                    'source': item.get('source'),
+                    'published_at': item.get('time_published'),
+                    'content': item.get('summary'),
+                    'sentiment': item.get('overall_sentiment_label'),
+                    'sentiment_score': item.get('overall_sentiment_score'),
+                    'category': 'market_news'
+                })
+
+            return articles
+        except Exception as e:
+            print(f"Error fetching from Alpha Vantage: {e}")
+            return []
+
+    def fetch_newsapi_articles(self):
+        """Fetch from NewsAPI"""
+        url = "https://newsapi.org/v2/everything"
+        params = {
+            'q': 'mutual fund India OR SEBI OR investment',
+            'language': 'en',
+            'sortBy': 'publishedAt',
+            'apiKey': self.newsapi_key,
+            'pageSize': 50
+        }
+
+        try:
+            response = requests.get(url, params=params, timeout=10)
+            data = response.json()
+
+            articles = []
+            for item in data.get('articles', []):
+                articles.append({
+                    'title': item.get('title'),
+                    'url': item.get('url'),
+                    'source': item.get('source', {}).get('name'),
+                    'published_at': item.get('publishedAt'),
+                    'content': item.get('description'),
+                    'category': 'mutual_fund_news'
+                })
+
+            return articles
+        except Exception as e:
+            print(f"Error fetching from NewsAPI: {e}")
+            return []
+
+    def analyze_sentiment(self, text):
+        """Analyze sentiment using TextBlob"""
+        if not text:
+            return 'neutral', 0.0
+
+        analysis = TextBlob(text)
+        polarity = analysis.sentiment.polarity
+
+        if polarity > 0.1:
+            sentiment = 'positive'
+        elif polarity < -0.1:
+            sentiment = 'negative'
+        else:
+            sentiment = 'neutral'
+
+        return sentiment, polarity
+
+    def extract_fund_mentions(self, text):
+        """Extract mentioned fund names from article"""
+        # Load list of fund names from database
+        # Simple keyword matching (can be improved with NER)
+
+        fund_keywords = [
+            'HDFC', 'SBI', 'ICICI', 'Axis', 'Aditya Birla',
+            'UTI', 'Mirae Asset', 'Nippon India', 'Kotak'
+        ]
+
+        mentioned = []
+        text_lower = text.lower()
+
+        for keyword in fund_keywords:
+            if keyword.lower() in text_lower:
+                mentioned.append(keyword)
+
+        return mentioned
+
+    def calculate_relevance_score(self, article):
+        """Score article relevance (0-100)"""
+        score = 0
+
+        # Title mentions mutual fund (+30)
+        if 'mutual fund' in article['title'].lower():
+            score += 30
+
+        # Content mentions funds (+20)
+        if article.get('content') and 'mutual fund' in article['content'].lower():
+            score += 20
+
+        # Recent article (+20)
+        pub_date = datetime.fromisoformat(article['published_at'].replace('Z', ''))
+        hours_old = (datetime.now() - pub_date).total_seconds() / 3600
+        if hours_old < 24:
+            score += 20
+        elif hours_old < 72:
+            score += 10
+
+        # Mentions specific funds (+15)
+        if article.get('mentioned_funds'):
+            score += 15
+
+        # From trusted source (+15)
+        trusted_sources = ['Economic Times', 'MoneyControl', 'Value Research']
+        if any(source in article.get('source', '') for source in trusted_sources):
+            score += 15
+
+        return min(score, 100)
+
+    def fetch_and_process_news(self):
+        """Main aggregation function"""
+        print(f"[{datetime.now()}] Fetching news...")
+
+        # Fetch from all sources
+        news = []
+        news.extend(self.fetch_alpha_vantage_news())
+        news.extend(self.fetch_newsapi_articles())
+
+        # Process each article
+        processed = []
+        for article in news:
+            # Analyze sentiment if not provided
+            if not article.get('sentiment'):
+                sentiment, score = self.analyze_sentiment(
+                    article.get('content', '') or article.get('title', '')
+                )
+                article['sentiment'] = sentiment
+                article['sentiment_score'] = score
+
+            # Extract fund mentions
+            article['mentioned_funds'] = json.dumps(
+                self.extract_fund_mentions(article.get('content', '') or article.get('title', ''))
+            )
+
+            # Calculate relevance
+            article['relevance_score'] = self.calculate_relevance_score(article)
+
+            processed.append(article)
+
+        # Save to database
+        self.save_articles(processed)
+
+        print(f"[{datetime.now()}] Processed {len(processed)} articles")
+
+    def save_articles(self, articles):
+        """Save articles to database"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        for article in articles:
+            try:
+                cursor.execute('''
+                    INSERT OR IGNORE INTO news_articles
+                    (title, url, source, published_at, content, sentiment,
+                     sentiment_score, mentioned_funds, relevance_score, category)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    article.get('title'),
+                    article.get('url'),
+                    article.get('source'),
+                    article.get('published_at'),
+                    article.get('content'),
+                    article.get('sentiment'),
+                    article.get('sentiment_score'),
+                    article.get('mentioned_funds'),
+                    article.get('relevance_score'),
+                    article.get('category')
+                ))
+            except Exception as e:
+                print(f"Error saving article: {e}")
+
+        conn.commit()
+        conn.close()
+
+    def get_latest_news(self, limit=20, min_relevance=50):
+        """Retrieve latest news from database"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            SELECT title, url, source, published_at, sentiment,
+                   relevance_score, mentioned_funds
+            FROM news_articles
+            WHERE relevance_score >= ?
+            ORDER BY published_at DESC
+            LIMIT ?
+        ''', (min_relevance, limit))
+
+        articles = cursor.fetchall()
+        conn.close()
+
+        return [
+            {
+                'title': row[0],
+                'url': row[1],
+                'source': row[2],
+                'published_at': row[3],
+                'sentiment': row[4],
+                'relevance_score': row[5],
+                'mentioned_funds': json.loads(row[6]) if row[6] else []
+            }
+            for row in articles
+        ]
+
+    def start_scheduler(self):
+        """Start automated news fetching"""
+        # Fetch news every hour
+        self.scheduler.add_job(
+            self.fetch_and_process_news,
+            'interval',
+            hours=1,
+            id='news_fetch_job'
+        )
+
+        self.scheduler.start()
+        print("News aggregation scheduler started (runs every hour)")
+
+
+# Usage:
+aggregator = NewsAggregator()
+aggregator.start_scheduler()  # Auto-fetch every hour
+
+# Get latest news
+latest_news = aggregator.get_latest_news(limit=20)
+
+
+Performance Tracking System:
+-----------------------------
+
+# news_portal/performance_tracker.py
+import requests
+import pandas as pd
+from datetime import datetime
+
+class PerformanceTracker:
+    """
+    Track daily fund performance and market indicators
+    """
+
+    def __init__(self, db_path='data/news.db'):
+        self.db_path = db_path
+        self.mf_api_base = "https://api.mfapi.in/mf"
+
+    def get_daily_top_performers(self, n=10):
+        """Get top performing funds today"""
+
+        # Fetch latest NAV for all tracked funds
+        # (Simplified - in production, query from your database)
+
+        top_performers = [
+            {'name': 'HDFC Small Cap Fund', 'change': +3.2, 'category': 'Small Cap'},
+            {'name': 'Axis Midcap Fund', 'change': +2.8, 'category': 'Mid Cap'},
+            {'name': 'SBI Bluechip Fund', 'change': +2.1, 'category': 'Large Cap'},
+        ]
+
+        return top_performers[:n]
+
+    def get_daily_losers(self, n=10):
+        """Get worst performing funds today"""
+
+        losers = [
+            {'name': 'ABC Sectoral Fund', 'change': -2.1, 'category': 'Sectoral'},
+            {'name': 'XYZ Thematic Fund', 'change': -1.8, 'category': 'Thematic'},
+        ]
+
+        return losers[:n]
+
+    def calculate_category_performance(self):
+        """Average performance by category"""
+
+        categories = {
+            'Large Cap': +1.2,
+            'Mid Cap': +1.8,
+            'Small Cap': +2.3,
+            'Debt': +0.1,
+            'Hybrid': +0.8
+        }
+
+        return categories
+
+    def get_market_sentiment(self):
+        """Determine overall market sentiment"""
+
+        # Based on Nifty 50, VIX, FII flows, etc.
+        nifty_change = +1.2  # Example
+        vix = 15.3
+
+        if nifty_change > 1 and vix < 20:
+            return 'BULLISH'
+        elif nifty_change < -1 or vix > 25:
+            return 'BEARISH'
+        else:
+            return 'NEUTRAL'
+
+
+Frontend Layout Example:
+-------------------------
+
+HTML/CSS for News Portal:
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MF News & Updates</title>
+    <style>
+        .news-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .market-overview {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .sentiment-bullish {
+            color: #10b981;
+            font-weight: bold;
+        }
+
+        .top-performers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .performer-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .news-item {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .sentiment-positive { color: #10b981; }
+        .sentiment-negative { color: #ef4444; }
+        .sentiment-neutral { color: #6b7280; }
+    </style>
+</head>
+<body>
+    <div class="news-container">
+        <!-- Market Overview -->
+        <div class="market-overview">
+            <h2>Market Overview</h2>
+            <div class="market-stats">
+                <span class="sentiment-bullish">MARKET MOOD: BULLISH</span>
+                <span>NIFTY 50: 21,456 (+1.2%)</span>
+                <span>India VIX: 15.3</span>
+            </div>
+        </div>
+
+        <!-- Top Performers -->
+        <h3>Top Performers Today</h3>
+        <div class="top-performers">
+            <div class="performer-card">
+                <h4>HDFC Small Cap Fund</h4>
+                <p class="sentiment-positive">+3.2%</p>
+                <span class="category">Small Cap</span>
+            </div>
+            <div class="performer-card">
+                <h4>Axis Midcap Fund</h4>
+                <p class="sentiment-positive">+2.8%</p>
+                <span class="category">Mid Cap</span>
+            </div>
+        </div>
+
+        <!-- News Feed -->
+        <h3>Latest News</h3>
+        <div id="news-feed">
+            <div class="news-item">
+                <h4>SEBI announces new mutual fund regulations</h4>
+                <p class="meta">
+                    <span class="sentiment-positive">Positive Impact</span>
+                    <span>2 hours ago</span>
+                    <span>Economic Times</span>
+                </p>
+                <p class="summary">New regulations aim to improve transparency...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Fetch and display news via API
+        async function loadNews() {
+            const response = await fetch('/api/news/latest');
+            const news = await response.json();
+
+            const newsFeed = document.getElementById('news-feed');
+            newsFeed.innerHTML = news.map(article => `
+                <div class="news-item">
+                    <h4>${article.title}</h4>
+                    <p class="meta">
+                        <span class="sentiment-${article.sentiment}">
+                            ${article.sentiment} Impact
+                        </span>
+                        <span>${new Date(article.published_at).toLocaleString()}</span>
+                        <span>${article.source}</span>
+                    </p>
+                    <a href="${article.url}" target="_blank">Read more</a>
+                </div>
+            `).join('');
+        }
+
+        loadNews();
+        setInterval(loadNews, 300000);  // Refresh every 5 minutes
+    </script>
+</body>
+</html>
+
+
+API Endpoints for News:
+------------------------
+
+# In api/app.py, add:
+
+@app.get("/api/news/latest")
+async def get_latest_news(limit: int = 20):
+    """Get latest mutual fund news"""
+    aggregator = NewsAggregator()
+    news = aggregator.get_latest_news(limit=limit)
+    return {"news": news}
+
+@app.get("/api/performance/top")
+async def get_top_performers(n: int = 10):
+    """Get top performing funds today"""
+    tracker = PerformanceTracker()
+    performers = tracker.get_daily_top_performers(n=n)
+    return {"top_performers": performers}
+
+@app.get("/api/market/sentiment")
+async def get_market_sentiment():
+    """Get overall market sentiment"""
+    tracker = PerformanceTracker()
+    sentiment = tracker.get_market_sentiment()
+    return {"sentiment": sentiment}
+
+
+================================================================================
+7. USER AUTHENTICATION & PORTFOLIO MANAGEMENT
+================================================================================
+
+Overview:
+---------
+Implement secure user authentication system with JWT tokens and comprehensive
+portfolio management features including:
+- User registration and login
+- Portfolio creation and tracking
+- Holdings management
+- Transaction history
+- AI-powered rebalancing recommendations
+- Performance analytics
+
+Technology Stack:
+-----------------
+
+Authentication: JWT (JSON Web Tokens)
+Database: PostgreSQL (upgrade from SQLite)
+Password Hashing: Argon2 (2025 best practice)
+Backend: FastAPI with OAuth2
+
+Installation:
+pip install fastapi[all]
+pip install python-jose[cryptography]
+pip install passlib[argon2]
+pip install sqlalchemy psycopg2-binary
+pip install python-multipart
+
+Database Migration: SQLite → PostgreSQL
+----------------------------------------
+
+WHY PostgreSQL?
+- Handles concurrent users (SQLite locks entire database)
+- Better performance for production
+- ACID compliance
+- Rich data types (JSONB for metadata)
+- PostGIS support for future features
+
+Setup PostgreSQL:
+1. Install PostgreSQL (download from postgresql.org)
+2. Create database:
+   createdb mf_advisor_db
+3. Update connection string in config
+
+Database Schema Design:
+-----------------------
+
+-- Users Table
+CREATE TABLE users (
+    user_id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    phone VARCHAR(20),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_login TIMESTAMP,
+    email_verified BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE,
+    risk_profile VARCHAR(20) DEFAULT 'MODERATE',  -- LOW, MODERATE, HIGH
+    investment_horizon VARCHAR(20) DEFAULT 'MEDIUM_TERM'  -- SHORT, MEDIUM, LONG
+);
+
+-- Portfolios Table (user can have multiple portfolios)
+CREATE TABLE portfolios (
+    portfolio_id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
+    portfolio_name VARCHAR(100) DEFAULT 'My Portfolio',
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    total_invested DECIMAL(15, 2) DEFAULT 0,
+    current_value DECIMAL(15, 2) DEFAULT 0,
+    absolute_return DECIMAL(15, 2) DEFAULT 0,
+    return_percentage DECIMAL(7, 2) DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    UNIQUE(user_id, portfolio_name)
+);
+
+-- Holdings Table (individual fund holdings)
+CREATE TABLE holdings (
+    holding_id SERIAL PRIMARY KEY,
+    portfolio_id INTEGER REFERENCES portfolios(portfolio_id) ON DELETE CASCADE,
+    scheme_code VARCHAR(20) NOT NULL,
+    fund_name VARCHAR(255),
+    category VARCHAR(100),
+    units DECIMAL(15, 4),
+    avg_purchase_nav DECIMAL(10, 4),
+    current_nav DECIMAL(10, 4),
+    invested_amount DECIMAL(15, 2),
+    current_value DECIMAL(15, 2),
+    absolute_return DECIMAL(15, 2),
+    return_percentage DECIMAL(7, 2),
+    xirr DECIMAL(7, 2),  -- Extended Internal Rate of Return
+    first_purchase_date DATE,
+    last_purchase_date DATE,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Transactions Table (all buy/sell/switch transactions)
+CREATE TABLE transactions (
+    transaction_id SERIAL PRIMARY KEY,
+    holding_id INTEGER REFERENCES holdings(holding_id) ON DELETE CASCADE,
+    portfolio_id INTEGER REFERENCES portfolios(portfolio_id),
+    transaction_type VARCHAR(20) NOT NULL,  -- BUY, SELL, SWITCH_IN, SWITCH_OUT
+    transaction_date DATE NOT NULL,
+    units DECIMAL(15, 4),
+    nav DECIMAL(10, 4),
+    amount DECIMAL(15, 2),
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Rebalancing Recommendations Table
+CREATE TABLE rebalancing_recommendations (
+    recommendation_id SERIAL PRIMARY KEY,
+    portfolio_id INTEGER REFERENCES portfolios(portfolio_id),
+    generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    recommendation_type VARCHAR(50),  -- MODEL_BASED, RULE_BASED, MANUAL
+    current_allocation JSONB,  -- Current portfolio allocation
+    recommended_allocation JSONB,  -- Recommended allocation
+    actions JSONB,  -- List of buy/sell actions
+    expected_improvement JSONB,  -- Expected Sharpe, return, etc.
+    status VARCHAR(20) DEFAULT 'PENDING',  -- PENDING, ACCEPTED, REJECTED
+    valid_until TIMESTAMP,
+    applied_at TIMESTAMP
+);
+
+-- Performance History (snapshot portfolio values daily)
+CREATE TABLE portfolio_history (
+    history_id SERIAL PRIMARY KEY,
+    portfolio_id INTEGER REFERENCES portfolios(portfolio_id),
+    date DATE NOT NULL,
+    total_value DECIMAL(15, 2),
+    total_invested DECIMAL(15, 2),
+    return_percentage DECIMAL(7, 2),
+    UNIQUE(portfolio_id, date)
+);
+
+-- User Sessions (for refresh tokens)
+CREATE TABLE user_sessions (
+    session_id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(user_id),
+    refresh_token VARCHAR(500) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE
+);
+
+-- Indexes for performance
+CREATE INDEX idx_portfolio_user ON portfolios(user_id);
+CREATE INDEX idx_holdings_portfolio ON holdings(portfolio_id);
+CREATE INDEX idx_transactions_portfolio ON transactions(portfolio_id);
+CREATE INDEX idx_transactions_date ON transactions(transaction_date);
+CREATE INDEX idx_rebalance_portfolio ON rebalancing_recommendations(portfolio_id);
+CREATE INDEX idx_history_portfolio_date ON portfolio_history(portfolio_id, date);
+
+
+Authentication Implementation:
+-------------------------------
+
+# auth/auth_handler.py
+from datetime import datetime, timedelta
+from typing import Optional
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from pydantic import BaseModel
+
+# Configuration
+SECRET_KEY = "your-secret-key-change-in-production-use-env-variable"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 15
+REFRESH_TOKEN_EXPIRE_DAYS = 7
+
+# Password hashing with Argon2 (2025 best practice)
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
+
+# Pydantic models
+class Token(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
+
+class UserCreate(BaseModel):
+    email: str
+    password: str
+    first_name: str
+    last_name: str
+    phone: Optional[str] = None
+    risk_profile: Optional[str] = "MODERATE"
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+class UserResponse(BaseModel):
+    user_id: int
+    email: str
+    first_name: str
+    last_name: str
+    risk_profile: str
+    created_at: datetime
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify password against hash"""
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password: str) -> str:
+    """Hash password using Argon2"""
+    return pwd_context.hash(password)
+
+def create_access_token(data: dict) -> str:
+    """Create JWT access token (15 minutes)"""
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire, "type": "access"})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+def create_refresh_token(data: dict) -> str:
+    """Create JWT refresh token (7 days)"""
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    to_encode.update({"exp": expire, "type": "refresh"})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    """Get current authenticated user from token"""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        token_type: str = payload.get("type")
+
+        if email is None or token_type != "access":
+            raise credentials_exception
+
+        token_data = TokenData(email=email)
+    except JWTError:
+        raise credentials_exception
+
+    # Fetch user from database
+    user = get_user_by_email(token_data.email)  # Implement this
+    if user is None:
+        raise credentials_exception
+
+    return user
+
+
+# In api/app.py, add authentication endpoints:
+
+from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
+import database  # Your database module
+
+app = FastAPI()
+
+@app.post("/api/auth/register", response_model=UserResponse)
+async def register(user: UserCreate, db: Session = Depends(database.get_db)):
+    """Register new user"""
+
+    # Check if user exists
+    existing_user = db.query(User).filter(User.email == user.email).first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+
+    # Validate password strength
+    if len(user.password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be at least 8 characters"
+        )
+
+    # Create user
+    hashed_password = get_password_hash(user.password)
+    db_user = User(
+        email=user.email,
+        password_hash=hashed_password,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        phone=user.phone,
+        risk_profile=user.risk_profile
+    )
+
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+
+    # Create default portfolio
+    default_portfolio = Portfolio(
+        user_id=db_user.user_id,
+        portfolio_name="My Portfolio"
+    )
+    db.add(default_portfolio)
+    db.commit()
+
+    return db_user
+
+@app.post("/api/auth/login", response_model=Token)
+async def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(database.get_db)
+):
+    """Login user and return JWT tokens"""
+
+    # Authenticate user
+    user = db.query(User).filter(User.email == form_data.username).first()
+
+    if not user or not verify_password(form_data.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is inactive"
+        )
+
+    # Create tokens
+    access_token = create_access_token(data={"sub": user.email})
+    refresh_token = create_refresh_token(data={"sub": user.email})
+
+    # Update last login
+    user.last_login = datetime.utcnow()
+    db.commit()
+
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer"
+    }
+
+@app.post("/api/auth/refresh", response_model=Token)
+async def refresh_token(refresh_token: str):
+    """Refresh access token using refresh token"""
+
+    try:
+        payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        token_type: str = payload.get("type")
+
+        if email is None or token_type != "refresh":
+            raise HTTPException(status_code=401)
+
+        # Create new access token
+        access_token = create_access_token(data={"sub": email})
+        new_refresh_token = create_refresh_token(data={"sub": email})
+
+        return {
+            "access_token": access_token,
+            "refresh_token": new_refresh_token,
+            "token_type": "bearer"
+        }
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+@app.get("/api/user/me", response_model=UserResponse)
+async def get_current_user_info(current_user = Depends(get_current_user)):
+    """Get current user information"""
+    return current_user
+
+
+Portfolio Management APIs:
+---------------------------
+
+# portfolio/portfolio_manager.py
+from sqlalchemy.orm import Session
+from decimal import Decimal
+import requests
+from datetime import datetime
+
+class PortfolioManager:
+    """Manage user portfolios and holdings"""
+
+    def __init__(self, db: Session):
+        self.db = db
+        self.mf_api = "https://api.mfapi.in/mf"
+
+    def create_portfolio(self, user_id: int, name: str, description: str = ""):
+        """Create new portfolio for user"""
+        portfolio = Portfolio(
+            user_id=user_id,
+            portfolio_name=name,
+            description=description
+        )
+        self.db.add(portfolio)
+        self.db.commit()
+        return portfolio
+
+    def add_holding(self, portfolio_id: int, scheme_code: str,
+                   units: Decimal, purchase_nav: Decimal,
+                   purchase_date: datetime):
+        """Add or update holding in portfolio"""
+
+        # Fetch fund details
+        fund_data = self.get_fund_details(scheme_code)
+
+        # Check if holding exists
+        existing = self.db.query(Holding).filter(
+            Holding.portfolio_id == portfolio_id,
+            Holding.scheme_code == scheme_code
+        ).first()
+
+        if existing:
+            # Update existing holding (average NAV)
+            total_units = existing.units + units
+            total_invested = (existing.units * existing.avg_purchase_nav +
+                            units * purchase_nav)
+            new_avg_nav = total_invested / total_units
+
+            existing.units = total_units
+            existing.avg_purchase_nav = new_avg_nav
+            existing.invested_amount = total_invested
+            existing.last_purchase_date = purchase_date
+
+            holding = existing
+        else:
+            # Create new holding
+            holding = Holding(
+                portfolio_id=portfolio_id,
+                scheme_code=scheme_code,
+                fund_name=fund_data['scheme_name'],
+                category=fund_data['category'],
+                units=units,
+                avg_purchase_nav=purchase_nav,
+                invested_amount=units * purchase_nav,
+                first_purchase_date=purchase_date,
+                last_purchase_date=purchase_date
+            )
+            self.db.add(holding)
+
+        # Add transaction
+        transaction = Transaction(
+            holding_id=holding.holding_id,
+            portfolio_id=portfolio_id,
+            transaction_type='BUY',
+            transaction_date=purchase_date,
+            units=units,
+            nav=purchase_nav,
+            amount=units * purchase_nav
+        )
+        self.db.add(transaction)
+
+        self.db.commit()
+        self.update_portfolio_value(portfolio_id)
+
+        return holding
+
+    def get_fund_details(self, scheme_code: str):
+        """Fetch fund details from API"""
+        response = requests.get(f"{self.mf_api}/{scheme_code}")
+        data = response.json()
+
+        return {
+            'scheme_name': data['meta']['scheme_name'],
+            'category': data['meta'].get('scheme_category', 'Unknown'),
+            'current_nav': float(data['data'][0]['nav'])
+        }
+
+    def update_portfolio_value(self, portfolio_id: int):
+        """Update current value of all holdings and portfolio"""
+
+        holdings = self.db.query(Holding).filter(
+            Holding.portfolio_id == portfolio_id
+        ).all()
+
+        total_invested = Decimal(0)
+        total_current = Decimal(0)
+
+        for holding in holdings:
+            # Fetch current NAV
+            fund_data = self.get_fund_details(holding.scheme_code)
+            current_nav = Decimal(str(fund_data['current_nav']))
+
+            # Update holding
+            holding.current_nav = current_nav
+            holding.current_value = holding.units * current_nav
+            holding.absolute_return = holding.current_value - holding.invested_amount
+            holding.return_percentage = (
+                (holding.current_value / holding.invested_amount - 1) * 100
+            )
+            holding.last_updated = datetime.now()
+
+            total_invested += holding.invested_amount
+            total_current += holding.current_value
+
+        # Update portfolio
+        portfolio = self.db.query(Portfolio).get(portfolio_id)
+        portfolio.total_invested = total_invested
+        portfolio.current_value = total_current
+        portfolio.absolute_return = total_current - total_invested
+        portfolio.return_percentage = (
+            (total_current / total_invested - 1) * 100 if total_invested > 0 else 0
+        )
+        portfolio.last_updated = datetime.now()
+
+        self.db.commit()
+
+    def get_portfolio_summary(self, portfolio_id: int):
+        """Get comprehensive portfolio summary"""
+
+        portfolio = self.db.query(Portfolio).get(portfolio_id)
+        holdings = self.db.query(Holding).filter(
+            Holding.portfolio_id == portfolio_id
+        ).all()
+
+        # Calculate allocation by category
+        category_allocation = {}
+        for holding in holdings:
+            category = holding.category
+            if category not in category_allocation:
+                category_allocation[category] = Decimal(0)
+            category_allocation[category] += holding.current_value
+
+        # Convert to percentages
+        total_value = portfolio.current_value
+        category_allocation_pct = {
+            category: float((value / total_value) * 100)
+            for category, value in category_allocation.items()
+        }
+
+        return {
+            'portfolio': {
+                'name': portfolio.portfolio_name,
+                'total_invested': float(portfolio.total_invested),
+                'current_value': float(portfolio.current_value),
+                'absolute_return': float(portfolio.absolute_return),
+                'return_percentage': float(portfolio.return_percentage),
+                'num_holdings': len(holdings)
+            },
+            'holdings': [
+                {
+                    'fund_name': h.fund_name,
+                    'category': h.category,
+                    'units': float(h.units),
+                    'invested_amount': float(h.invested_amount),
+                    'current_value': float(h.current_value),
+                    'return_percentage': float(h.return_percentage),
+                    'allocation': float((h.current_value / total_value) * 100)
+                }
+                for h in holdings
+            ],
+            'category_allocation': category_allocation_pct
+        }
+
+
+# API Endpoints
+
+@app.post("/api/portfolio/create")
+async def create_portfolio(
+    name: str,
+    description: str = "",
+    current_user = Depends(get_current_user),
+    db: Session = Depends(database.get_db)
+):
+    """Create new portfolio"""
+    manager = PortfolioManager(db)
+    portfolio = manager.create_portfolio(
+        current_user.user_id, name, description
+    )
+    return {"portfolio_id": portfolio.portfolio_id}
+
+@app.post("/api/portfolio/{portfolio_id}/add-holding")
+async def add_holding(
+    portfolio_id: int,
+    scheme_code: str,
+    units: float,
+    purchase_nav: float,
+    purchase_date: str,
+    current_user = Depends(get_current_user),
+    db: Session = Depends(database.get_db)
+):
+    """Add holding to portfolio"""
+
+    # Verify portfolio belongs to user
+    portfolio = db.query(Portfolio).get(portfolio_id)
+    if portfolio.user_id != current_user.user_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    manager = PortfolioManager(db)
+    holding = manager.add_holding(
+        portfolio_id,
+        scheme_code,
+        Decimal(str(units)),
+        Decimal(str(purchase_nav)),
+        datetime.fromisoformat(purchase_date)
+    )
+
+    return {"holding_id": holding.holding_id}
+
+@app.get("/api/portfolio/{portfolio_id}/summary")
+async def get_portfolio_summary(
+    portfolio_id: int,
+    current_user = Depends(get_current_user),
+    db: Session = Depends(database.get_db)
+):
+    """Get portfolio summary"""
+
+    # Verify access
+    portfolio = db.query(Portfolio).get(portfolio_id)
+    if portfolio.user_id != current_user.user_id:
+        raise HTTPException(status_code=403)
+
+    manager = PortfolioManager(db)
+    summary = manager.get_portfolio_summary(portfolio_id)
+
+    return summary
+
+
+Portfolio Rebalancing Engine:
+------------------------------
+
+# portfolio/rebalancing_engine.py
+from pypfopt import EfficientFrontier, risk_models, expected_returns
+import pandas as pd
+import numpy as np
+
+class RebalancingEngine:
+    """AI-powered portfolio rebalancing"""
+
+    def __init__(self, model, db: Session):
+        self.model = model  # Your trained Gemma/Phi-2 model
+        self.db = db
+
+    def analyze_portfolio(self, portfolio_id: int):
+        """Generate rebalancing recommendations"""
+
+        # Get portfolio holdings
+        holdings = self.db.query(Holding).filter(
+            Holding.portfolio_id == portfolio_id
+        ).all()
+
+        if len(holdings) == 0:
+            return {"error": "Portfolio is empty"}
+
+        # Get historical returns for each fund
+        returns_data = {}
+        for holding in holdings:
+            historical = self.get_historical_returns(holding.scheme_code)
+            returns_data[holding.fund_name] = historical
+
+        returns_df = pd.DataFrame(returns_data)
+
+        # Calculate expected returns using AI model
+        expected_returns_dict = {}
+        for holding in holdings:
+            prediction = self.model.predict_fund(holding.scheme_code)
+            expected_returns_dict[holding.fund_name] = prediction['expected_return'] / 100
+
+        # Calculate risk (covariance matrix)
+        cov_matrix = risk_models.sample_cov(returns_df)
+
+        # Optimize portfolio (maximize Sharpe ratio)
+        ef = EfficientFrontier(expected_returns_dict, cov_matrix)
+        weights = ef.max_sharpe()
+        cleaned_weights = ef.clean_weights()
+
+        # Get current allocation
+        total_value = sum([h.current_value for h in holdings])
+        current_allocation = {
+            h.fund_name: float(h.current_value / total_value)
+            for h in holdings
+        }
+
+        # Generate rebalancing actions
+        actions = []
+        for fund_name, target_weight in cleaned_weights.items():
+            current_weight = current_allocation.get(fund_name, 0)
+            diff = target_weight - current_weight
+
+            if abs(diff) > 0.05:  # 5% threshold
+                action_type = 'BUY' if diff > 0 else 'SELL'
+                amount = abs(diff) * float(total_value)
+
+                actions.append({
+                    'action': action_type,
+                    'fund': fund_name,
+                    'current_allocation': f'{current_weight*100:.1f}%',
+                    'target_allocation': f'{target_weight*100:.1f}%',
+                    'change_required': f'{abs(diff)*100:.1f}%',
+                    'amount': round(amount, 2)
+                })
+
+        # Calculate expected improvement
+        performance = ef.portfolio_performance()
+
+        recommendation = {
+            'portfolio_id': portfolio_id,
+            'generated_at': datetime.now().isoformat(),
+            'current_allocation': current_allocation,
+            'recommended_allocation': cleaned_weights,
+            'actions': actions,
+            'expected_improvement': {
+                'expected_return': f'{performance[0]*100:.2f}%',
+                'volatility': f'{performance[1]*100:.2f}%',
+                'sharpe_ratio': round(performance[2], 2)
+            },
+            'num_actions': len(actions)
+        }
+
+        # Save to database
+        self.save_recommendation(recommendation)
+
+        return recommendation
+
+
+@app.get("/api/portfolio/{portfolio_id}/rebalance")
+async def get_rebalancing_recommendation(
+    portfolio_id: int,
+    current_user = Depends(get_current_user),
+    db: Session = Depends(database.get_db)
+):
+    """Get AI-powered rebalancing recommendations"""
+
+    # Verify access
+    portfolio = db.query(Portfolio).get(portfolio_id)
+    if portfolio.user_id != current_user.user_id:
+        raise HTTPException(status_code=403)
+
+    engine = RebalancingEngine(model, db)
+    recommendation = engine.analyze_portfolio(portfolio_id)
+
+    return recommendation
+
+
+Security Best Practices:
+-------------------------
+1. Store SECRET_KEY in environment variable (.env file)
+2. Use HTTPS/SSL certificates in production
+3. Implement rate limiting (10 login attempts per hour)
+4. Add email verification before account activation
+5. Implement 2FA (optional but recommended)
+6. Hash passwords with Argon2 (already included)
+7. Set httpOnly cookies for tokens (prevents XSS)
+8. Implement CORS properly
+9. Regular security audits
+10. Monitor for suspicious activity
+
+
+================================================================================
+8. IMPLEMENTATION ROADMAP (6 PHASES)
+================================================================================
+
+TIMELINE: 4-6 months with 2-3 person team
+         6-9 months with solo developer
+
+PHASE 1: Backtesting Framework (2-3 weeks)
+-------------------------------------------
+Week 1-2:
+[ ] Install and setup `bt` library
+[ ] Create data preprocessing pipeline
+[ ] Implement basic equal-weight strategy
+[ ] Run backtests on 3-month, 6-month, 1-year periods
+[ ] Test with 10 sample funds
+
+Week 3:
+[ ] Add COVID-19 crash scenario testing (2020)
+[ ] Add 2022 correction testing
+[ ] Implement comprehensive metrics (Sharpe, Sortino, Max DD)
+[ ] Generate HTML reports using quantstats
+[ ] Document findings and benchmarks
+
+Deliverables:
+- Backtesting engine with multiple timeframes
+- Crisis scenario analysis
+- Performance reports comparing strategies
+- Documentation of target metrics
+
+Success Criteria:
+- Backtests run successfully on 5+ timeframes
+- Sharpe ratio > 1.5 in stable periods
+- Max drawdown < 25% during COVID crash
+- Clear documentation of methodology
+
+
+PHASE 2: Model Accuracy & Evaluation (2-3 weeks)
+-------------------------------------------------
+Week 1:
+[ ] Build comprehensive evaluation framework
+[ ] Implement prediction metrics (RMSE, MAE, MAPE, R²)
+[ ] Add financial metrics (Sharpe, Sortino, Calmar)
+[ ] Create walk-forward validation system
+[ ] Test current model performance
+
+Week 2:
+[ ] Improve training data format (rich context)
+[ ] Generate 10,000+ high-quality training examples
+[ ] Experiment with LoRA hyperparameters
+[ ] (Optional) Test Gemma model vs current Phi-2
+[ ] Run training experiments
+
+Week 3:
+[ ] Evaluate model on test set
+[ ] Compare with benchmarks (Nifty 50, equal-weight)
+[ ] Fine-tune based on evaluation results
+[ ] Generate model performance report
+[ ] Document best practices
+
+Deliverables:
+- Comprehensive evaluation framework
+- High-quality training dataset (10,000+ examples)
+- Model performance report
+- Improved model (if retraining performed)
+
+Success Criteria:
+- Prediction RMSE < 5%
+- Directional accuracy > 65%
+- Sharpe ratio (backtesting) > 1.5
+- Documented improvement over baseline
+
+
+PHASE 3: User Authentication & Portfolio Management (3-4 weeks)
+----------------------------------------------------------------
+Week 1:
+[ ] Setup PostgreSQL database
+[ ] Design and create database schema
+[ ] Implement SQLAlchemy models
+[ ] Create migration scripts from SQLite
+[ ] Test database connection and queries
+
+Week 2:
+[ ] Implement JWT authentication
+[ ] Create registration endpoint with email validation
+[ ] Create login endpoint
+[ ] Add password reset functionality
+[ ] Implement refresh token mechanism
+[ ] Add rate limiting
+
+Week 3:
+[ ] Build portfolio management APIs
+  [ ] Create portfolio
+  [ ] Add/remove holdings
+  [ ] Update portfolio values
+  [ ] Get portfolio summary
+  [ ] Transaction history
+[ ] Implement automated NAV update scheduler
+[ ] Add data validation and error handling
+
+Week 4:
+[ ] Implement rebalancing recommendation engine
+[ ] Integrate with trained model
+[ ] Add portfolio optimization (PyPortfolioOpt)
+[ ] Create rebalancing API endpoints
+[ ] Testing and debugging
+[ ] API documentation (Swagger auto-generated)
+[ ] Security hardening
+
+Deliverables:
+- PostgreSQL database with full schema
+- Secure authentication system (JWT + Argon2)
+- Complete portfolio management APIs
+- AI-powered rebalancing engine
+- API documentation
+
+Success Criteria:
+- All API endpoints working and documented
+- Authentication secure (JWT with httpOnly cookies)
+- Portfolio calculations accurate
+- Rebalancing recommendations sensible
+- Response time < 200ms (95th percentile)
+
+
+PHASE 4: News & Updates Portal (2-3 weeks)
+-------------------------------------------
+Week 1:
+[ ] Setup news API integrations
+  [ ] Alpha Vantage account and API key
+  [ ] NewsAPI account and API key
+[ ] Implement news aggregation service
+[ ] Add sentiment analysis (TextBlob)
+[ ] Create news database schema
+[ ] Build scheduled jobs (APScheduler)
+[ ] Test news fetching and storage
+
+Week 2:
+[ ] Implement performance tracking
+  [ ] Daily top gainers/losers calculator
+  [ ] Category performance aggregator
+  [ ] Market mood indicator
+[ ] Add fund mention extraction
+[ ] Create news relevance scoring
+[ ] Optimize database queries
+
+Week 3:
+[ ] Build news API endpoints
+[ ] Test scheduled updates (hourly)
+[ ] (Optional) Add web scraping for Indian sources
+[ ] Implement caching for performance
+[ ] Error handling and monitoring
+[ ] Performance optimization
+
+Deliverables:
+- News aggregation system (2+ sources)
+- Performance tracking dashboard data
+- Scheduled update jobs (hourly)
+- News API endpoints
+- Sentiment analysis
+
+Success Criteria:
+- News updated every hour automatically
+- Sentiment analysis working
+- Top performers identified correctly
+- API response time < 100ms
+- No API rate limit violations
+
+
+PHASE 5: Frontend Development (3-4 weeks)
+------------------------------------------
+Week 1-2:
+[ ] Design UI/UX (wireframes)
+[ ] Setup frontend framework (React recommended)
+[ ] Authentication pages
+  [ ] Login page
+  [ ] Registration page
+  [ ] Forgot password page
+[ ] Portfolio management interface
+  [ ] Portfolio overview dashboard
+  [ ] Holdings list with returns
+  [ ] Add/edit holdings form
+  [ ] Transaction history page
+[ ] Connect to backend APIs
+
+Week 3:
+[ ] News portal page
+  [ ] Breaking news section
+  [ ] Top performers/losers cards
+  [ ] Market sentiment indicator
+  [ ] Category performance charts
+[ ] Rebalancing recommendations UI
+  [ ] Visual portfolio allocation (pie chart)
+  [ ] Action suggestions list
+  [ ] Expected improvement metrics
+  [ ] Accept/reject functionality
+[ ] Charts and visualizations (Chart.js or D3.js)
+
+Week 4:
+[ ] Responsive design (mobile/tablet)
+[ ] Performance optimization
+  [ ] Code splitting
+  [ ] Lazy loading
+  [ ] Image optimization
+[ ] Cross-browser testing
+[ ] Accessibility (WCAG compliance)
+[ ] Final polish and bug fixes
+
+Deliverables:
+- Complete user portal (responsive)
+- News & updates page
+- Portfolio visualization
+- Authentication flow
+- Mobile-friendly design
+
+Success Criteria:
+- All pages responsive (desktop/tablet/mobile)
+- Page load time < 3 seconds
+- Intuitive user experience
+- No console errors
+- Works on Chrome, Firefox, Safari, Edge
+
+
+PHASE 6: Integration, Testing & Deployment (2 weeks)
+-----------------------------------------------------
+Week 1:
+[ ] End-to-end testing
+  [ ] Authentication flow
+  [ ] Portfolio management
+  [ ] News updates
+  [ ] Rebalancing
+[ ] Integration testing (frontend + backend)
+[ ] Security testing
+  [ ] SQL injection tests
+  [ ] XSS tests
+  [ ] CSRF protection
+  [ ] JWT validation
+[ ] Performance testing
+  [ ] Load testing (100+ concurrent users)
+  [ ] Stress testing
+  [ ] Database query optimization
+[ ] Bug fixes
+
+Week 2:
+[ ] Setup production environment
+  [ ] Cloud hosting (AWS/GCP/Azure)
+  [ ] PostgreSQL database (managed)
+  [ ] Redis for caching
+  [ ] SSL certificate
+[ ] Database migration to production
+[ ] Deploy backend (FastAPI)
+[ ] Deploy frontend (Nginx)
+[ ] Setup monitoring
+  [ ] Error tracking (Sentry)
+  [ ] Performance monitoring
+  [ ] Log aggregation
+[ ] Setup backups (daily automated)
+[ ] Final testing in production
+[ ] User acceptance testing
+
+Deliverables:
+- Production-ready application
+- Deployment documentation
+- Monitoring setup
+- Backup system
+- User documentation
+
+Success Criteria:
+- Application deployed and accessible
+- All features working in production
+- Monitoring alerts configured
+- Backups running daily
+- Response time SLA met (95% < 200ms)
+- Zero critical bugs
+
+
+POST-LAUNCH (Ongoing):
+----------------------
+[ ] Monitor system performance
+[ ] Collect user feedback
+[ ] Monthly model retraining
+[ ] News source expansion
+[ ] Feature enhancements based on feedback
+[ ] Security updates
+[ ] Performance optimization
+
+
+================================================================================
+9. TECHNICAL STACK & LIBRARIES
+================================================================================
+
+Core Backend:
+-------------
+pip install fastapi[all]              # Web framework
+pip install uvicorn[standard]         # ASGI server
+pip install sqlalchemy                # ORM
+pip install psycopg2-binary           # PostgreSQL driver
+pip install alembic                   # Database migrations
+
+Authentication:
+---------------
+pip install python-jose[cryptography] # JWT
+pip install passlib[argon2]           # Password hashing
+pip install python-multipart          # Form data
+
+Data Collection:
+----------------
+pip install requests                  # HTTP client
+pip install pandas                    # Data manipulation
+pip install numpy                     # Numerical computing
+pip install aiohttp                   # Async HTTP
+pip install mftool                    # Backup MF data source
+
+Machine Learning:
+-----------------
+pip install transformers              # Hugging Face models
+pip install peft                      # LoRA fine-tuning
+pip install accelerate                # Training acceleration
+pip install torch                     # PyTorch
+pip install datasets                  # Dataset handling
+pip install scikit-learn              # Evaluation metrics
+
+Backtesting:
+------------
+pip install bt                        # Backtesting framework
+pip install quantstats                # Performance reporting
+pip install PyPortfolioOpt            # Portfolio optimization
+pip install cvxopt                    # Convex optimization
+
+News Aggregation:
+-----------------
+pip install newsapi-python            # NewsAPI client
+pip install alpha-vantage             # Alpha Vantage client
+pip install textblob                  # Sentiment analysis
+pip install beautifulsoup4            # Web scraping
+pip install selenium                  # Browser automation
+pip install apscheduler               # Scheduled jobs
+
+Utilities:
+----------
+pip install python-dotenv             # Environment variables
+pip install loguru                    # Advanced logging
+pip install redis                     # Caching
+pip install celery                    # Task queue (optional)
+pip install pytest                    # Testing
+pip install black                     # Code formatting
+pip install flake8                    # Linting
+
+Frontend (if building with React):
+-----------------------------------
+npm install react react-dom
+npm install react-router-dom          # Routing
+npm install axios                     # HTTP client
+npm install chart.js react-chartjs-2  # Charts
+npm install tailwindcss               # CSS framework
+npm install @headlessui/react         # UI components
+
+
+================================================================================
+10. POTENTIAL CHALLENGES & SOLUTIONS
+================================================================================
+
+Challenge 1: API Rate Limits
+----------------------------
+Risk: Exceeding free tier limits for news APIs (25 requests/day Alpha Vantage)
+
+Solutions:
+- Implement request throttling and queuing
+- Cache responses for 1 hour minimum
+- Use multiple API sources as fallback
+- Monitor usage with alerts (90% threshold)
+- Upgrade to paid tier if user base grows ($49/month)
+- Implement exponential backoff for retries
+
+Code Example:
+from functools import lru_cache
+from datetime import datetime, timedelta
+
+@lru_cache(maxsize=100)
+def fetch_news_cached(cache_key):
+    # Cache for 1 hour
+    return fetch_news_from_api()
+
+
+Challenge 2: Model Accuracy
+----------------------------
+Risk: Poor predictions leading to bad recommendations and user distrust
+
+Mitigation Strategies:
+- Regular model retraining (monthly on latest data)
+- A/B testing before deploying new models
+- Show confidence levels with predictions
+- Clear disclaimers ("not financial advice")
+- Compare model recommendations vs benchmark
+- Collect user feedback on recommendations
+- Ensemble multiple models if single model underperforms
+
+Example Disclaimer:
+"These are AI-generated predictions based on historical patterns. Past
+performance does not guarantee future results. Please consult a certified
+financial advisor before making investment decisions."
+
+
+Challenge 3: Scalability
+------------------------
+Risk: System slowdown with increasing users (100+)
+
+Solutions:
+- Use PostgreSQL instead of SQLite (already planned)
+- Implement Redis caching for frequently accessed data
+- Database indexing on common queries
+- Connection pooling
+- Async API endpoints where applicable
+- CDN for static files
+- Consider microservices architecture (later phase)
+- Horizontal scaling with load balancer
+
+Database Optimization:
+- Add indexes: CREATE INDEX idx_user_email ON users(email);
+- Use EXPLAIN ANALYZE to optimize slow queries
+- Implement pagination (LIMIT/OFFSET)
+
+
+Challenge 4: Data Quality
+--------------------------
+Risk: Missing or incorrect NAV data affecting recommendations
+
+Mitigation:
+- Multiple data sources (primary + backup)
+- Automated validation checks (daily)
+- Outlier detection (>50% change likely error)
+- Fallback to cached data if API fails
+- Alert system for missing data
+- Manual review process for anomalies
+- Cross-validation between sources
+
+Validation Example:
+if abs((new_nav - prev_nav) / prev_nav) > 0.5:
+    alert_admin("Possible data error: 50%+ NAV change")
+    use_cached_value()
+
+
+Challenge 5: Security Vulnerabilities
+--------------------------------------
+Risk: User data breaches, unauthorized access
+
+Solutions:
+- Use HTTPS/SSL certificates (Let's Encrypt free)
+- JWT with short expiration (15 minutes)
+- Password hashing with Argon2 (implemented)
+- Rate limiting on login endpoint (10 attempts/hour)
+- Input validation and sanitization
+- SQL injection prevention (use ORM parameterized queries)
+- XSS protection (escape user input)
+- CSRF tokens for forms
+- Regular security audits
+- Keep dependencies updated
+
+Security Checklist:
+[ ] HTTPS enabled
+[ ] Passwords hashed (Argon2)
+[ ] JWT tokens (httpOnly cookies)
+[ ] Rate limiting implemented
+[ ] Input validation
+[ ] SQL injection protected (ORM)
+[ ] XSS protected
+[ ] CORS configured properly
+[ ] Dependencies updated
+[ ] Secrets in environment variables
+
+
+Challenge 6: Regulatory Compliance (SEBI)
+------------------------------------------
+Risk: Violating SEBI regulations for investment advice
+
+Mitigation:
+- Clear disclaimers on all pages
+- Terms of Service and Privacy Policy
+- User acknowledgment before using service
+- Do NOT claim "guaranteed returns"
+- Educational content framing
+- Consult legal expert familiar with SEBI regulations
+- Consider registering as RIA (Registered Investment Advisor)
+  if providing paid personalized advice
+
+Disclaimer Template:
+"This platform provides educational information and AI-generated analysis
+based on historical data. It does NOT constitute professional financial
+advice. All investment decisions should be made after consulting with a
+SEBI-registered investment advisor. Mutual fund investments are subject
+to market risks. Read all scheme related documents carefully."
+
+
+Challenge 7: Model Training Cost
+---------------------------------
+Risk: High computational cost for training large models
+
+Solutions:
+- Use LoRA instead of full fine-tuning (already doing - good!)
+- Start with smaller model (Phi-2 2B vs Gemma-7B)
+- Use cloud GPU credits (Google Colab, AWS free tier)
+- Train incrementally (not from scratch each time)
+- Use quantization (4-bit, 8-bit) to reduce memory
+- Consider distillation for deployment
+
+Cost Comparison:
+- Full fine-tuning: $100-500 per training run
+- LoRA fine-tuning: $10-50 per training run
+- Inference: $0.001 per prediction (optimized)
+
+
+Challenge 8: User Retention
+----------------------------
+Risk: Users sign up but don't return
+
+Solutions:
+- Email notifications for:
+  * Daily/weekly portfolio performance
+  * Rebalancing recommendations
+  * Important market news
+  * Top performing funds
+- Push notifications (if mobile app)
+- Gamification (badges, achievements)
+- Educational content (blog, videos)
+- Personalized insights
+- Easy onboarding experience
+- Free tier with premium upgrade path
+
+Engagement Metrics to Track:
+- Daily Active Users (DAU)
+- Monthly Active Users (MAU)
+- DAU/MAU ratio (target: > 30%)
+- Session duration
+- Feature usage
+
+
+================================================================================
+11. SUCCESS METRICS & KPIs
+================================================================================
+
+Model Performance Metrics:
+---------------------------
+Metric                      Target      Good        Excellent
+------------------------------------------------------------------------
+Prediction RMSE             < 8%        < 5%        < 3%
+Prediction MAE              < 5%        < 3%        < 2%
+MAPE                        < 15%       < 10%       < 8%
+R² Score                    > 0.5       > 0.7       > 0.8
+Directional Accuracy        > 55%       > 65%       > 70%
+Spearman Correlation        > 0.6       > 0.7       > 0.8
+
+Backtesting Metrics:
+--------------------
+Metric                      Target      Good        Excellent
+------------------------------------------------------------------------
+Sharpe Ratio                > 1.0       > 1.5       > 2.0
+Annualized Return           > 12%       > 15%       > 18%
+Maximum Drawdown            < 30%       < 25%       < 20%
+Sortino Ratio               > 1.5       > 2.0       > 2.5
+Win Rate                    > 55%       > 60%       > 65%
+Calmar Ratio                > 0.5       > 1.0       > 1.5
+Outperformance vs Nifty     > 2%        > 3%        > 5%
+
+System Performance Metrics:
+----------------------------
+Metric                      Target      Good        Excellent
+------------------------------------------------------------------------
+API Response Time (p95)     < 300ms     < 200ms     < 100ms
+Model Inference Time        < 3s        < 2s        < 1s
+System Uptime               > 99%       > 99.5%     > 99.9%
+Database Query Time         < 100ms     < 50ms      < 20ms
+Concurrent Users            100+        1000+       10000+
+Page Load Time              < 5s        < 3s        < 2s
+
+Business Metrics (6 months post-launch):
+-----------------------------------------
+Metric                      Target      Good        Excellent
+------------------------------------------------------------------------
+Registered Users            500+        1,000+      5,000+
+Active Users (monthly)      200+        500+        2,000+
+User Retention (30-day)     > 30%       > 40%       > 50%
+Portfolios Created          150+        300+        1,000+
+Avg Session Duration        > 5 min     > 10 min    > 15 min
+Daily Active Users          50+         150+        500+
+Recommendation Acceptance   > 20%       > 30%       > 40%
+
+Data Quality Metrics:
+---------------------
+Metric                      Target      Good        Excellent
+------------------------------------------------------------------------
+Data Completeness           > 95%       > 98%       > 99%
+Data Freshness (hours)      < 24        < 12        < 6
+Data Accuracy               > 95%       > 98%       > 99.5%
+Outlier Rate                < 5%        < 2%        < 0.5%
+
+
+Monitoring & Alerting:
+----------------------
+Setup alerts for:
+- API response time > 500ms (5 minutes sustained)
+- Error rate > 1% (any 5-minute window)
+- Database connection failures
+- News API failures
+- Model inference errors
+- Disk space < 20%
+- Memory usage > 80%
+- Failed login attempts > 100 (per hour)
+
+
+================================================================================
+12. COST ESTIMATES & RESOURCES
+================================================================================
+
+Development Team (Options):
+----------------------------
+
+Option 1: Solo Developer
+- Timeline: 6-9 months
+- Cost: Time only (no salary)
+- Pros: Full control, learning experience
+- Cons: Longer timeline, may need help with specialized areas
+
+Option 2: 2-Person Team
+- Timeline: 5-6 months
+- Roles: 1 Full-stack + 1 ML Engineer (part-time)
+- Cost: Depends on arrangement (college project: free)
+- Pros: Faster development, skill sharing
+- Cons: Coordination overhead
+
+Option 3: 3-5 Person Team
+- Timeline: 4-5 months
+- Roles: 2 Backend, 1 Frontend, 1 ML, 1 UI/UX (part-time)
+- Cost: For college project: free
+- Pros: Fastest development, specialized expertise
+- Cons: More coordination, more complex
+
+Infrastructure Costs (Monthly):
+--------------------------------
+
+Development Phase:
+- Cloud Hosting: Free tier (Heroku/Railway/Render)
+- PostgreSQL: Free tier (Heroku/Supabase)
+- API costs: Free tiers sufficient
+- Total: $0/month
+
+Production Phase (100-1000 users):
+- Cloud Hosting (AWS/GCP/Azure): $50-100/month
+  * EC2 t3.small or equivalent
+  * 2 vCPU, 2GB RAM
+- PostgreSQL (Managed): $20-50/month
+  * Or use Supabase free tier
+- Redis (Caching): $15-30/month
+  * Or use Redis Cloud free tier
+- Alpha Vantage API: $49/month
+  * Or stay on free tier initially
+- NewsAPI: Free (development)
+- Domain + SSL: $20/year
+  * SSL via Let's Encrypt (free)
+- Total: $100-200/month
+
+Production Phase (1000-10000 users):
+- Cloud Hosting: $200-400/month
+- PostgreSQL: $100-200/month
+- Redis: $50-100/month
+- CDN: $20-50/month
+- APIs: $100-150/month
+- Monitoring (Sentry, etc.): $50/month
+- Total: $500-950/month
+
+One-Time Costs:
+---------------
+- Domain registration: $15/year
+- SSL certificate: Free (Let's Encrypt)
+- Development tools: Free (VS Code, Git)
+- Design tools: Free (Figma free tier)
+- Total one-time: ~$15
+
+Recommended Starting Approach:
+-------------------------------
+For college project / MVP:
+1. Use ALL free tiers
+2. Host on Render/Railway (free)
+3. PostgreSQL on Supabase (free)
+4. Stay within API free limits
+5. Total cost: $15 (domain only)
+
+This allows you to:
+- Build and test completely free
+- Launch to first 100 users free
+- Prove concept before investing
+- Upgrade only when needed
+
+
+================================================================================
+13. IMMEDIATE NEXT STEPS
+================================================================================
+
+STEP 1: Project Setup (This Week)
+----------------------------------
+[ ] Review this entire document
+[ ] Discuss with team/advisor
+[ ] Set up version control
+    - Create GitHub repository
+    - Push existing code
+    - Create development branch
+[ ] Set up project management
+    - Create Trello/Jira board
+    - Add all tasks from Phase 1
+[ ] Set up development environment
+    - Create virtual environment
+    - Install Phase 1 dependencies
+    - Test existing code runs
+
+STEP 2: Start Phase 1 - Backtesting (Week 1-3)
+-----------------------------------------------
+[ ] Install bt library: pip install bt quantstats
+[ ] Create backtesting/ directory
+[ ] Implement basic backtesting framework
+[ ] Run first backtest on 3-month period
+[ ] Generate first performance report
+
+STEP 3: Documentation (Ongoing)
+--------------------------------
+[ ] Document all code with docstrings
+[ ] Keep this plan updated as you progress
+[ ] Document decisions and learnings
+[ ] Create user documentation (later phases)
+
+STEP 4: Regular Reviews (Weekly)
+---------------------------------
+[ ] Weekly team meetings
+[ ] Review progress against roadmap
+[ ] Update task status
+[ ] Identify blockers
+[ ] Adjust timeline if needed
+
+
+================================================================================
+CONCLUSION
+================================================================================
+
+This comprehensive plan provides a detailed roadmap to enhance your mutual
+fund advisor project with:
+
+1. ✅ 100+ funds with 5+ years data (ALREADY HAVE: 200+ with 20 years!)
+2. ✅ Robust backtesting framework (bt library, multi-timeframe)
+3. ✅ Model accuracy testing (comprehensive evaluation metrics)
+4. ✅ News & updates portal (Alpha Vantage + NewsAPI + sentiment)
+5. ✅ User authentication (JWT + Argon2)
+6. ✅ Portfolio management (PostgreSQL, holdings tracking)
+7. ✅ AI-powered rebalancing (PyPortfolioOpt + your model)
+8. ✅ Crisis scenario testing (COVID-19, 2022 correction)
+
+Your project already has a STRONG foundation with:
+- Extensive historical data (20 years, 200+ funds)
+- LoRA fine-tuning infrastructure
+- FastAPI backend
+- Basic web interface
+
+The main tasks ahead are:
+1. Backtesting (validates everything works)
+2. Model evaluation (improves accuracy)
+3. User system (enables real usage)
+4. News portal (adds value)
+
+Timeline: 4-6 months with focused effort
+Budget: Can start with $0 using free tiers
+
+This plan is based on 2025 best practices and includes specific libraries,
+code examples, and implementation details for every component.
+
+You're well-positioned to build an excellent mutual fund advisor platform!
+
+Good luck with your implementation!
+
+================================================================================
+Document prepared: January 2025
+For: MF Advisor Project Enhancement
+Author: Claude (Anthropic)
+================================================================================

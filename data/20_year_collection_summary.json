@@ -1,0 +1,11 @@
+{
+  "collection_completed": "2025-11-03T22:16:18.643288",
+  "duration_hours": 0.0049562236111111106,
+  "total_funds_processed": 27,
+  "successfully_saved": 19,
+  "funds_20y_plus": 0,
+  "funds_15_to_20y": 0,
+  "funds_10_to_15y": 18,
+  "funds_5_to_10y": 1,
+  "database_path": "data\\historical_20y.db"
+}

@@ -1,0 +1,964 @@
+================================================================================
+          MUTUAL FUND ADVISOR PROJECT - COMPLETE EXECUTION GUIDE
+================================================================================
+
+Project: AI-Powered Mutual Fund Investment Advisor
+Model: Google Gemma-2B (2 billion parameters) with LoRA fine-tuning
+Data: 20 years of historical NAV data from 200+ mutual funds
+Interface: FastAPI + Web UI
+
+
+================================================================================
+                      TABLE OF CONTENTS
+================================================================================
+
+1. PROJECT OVERVIEW
+2. ALL PYTHON FILES - ORGANIZED BY FUNCTION
+3. RECOMMENDED EXECUTION ORDER
+4. DETAILED STEP-BY-STEP GUIDE
+5. ALTERNATIVE EXECUTION PATHS
+6. FILE DEPENDENCIES MAP
+7. TROUBLESHOOTING GUIDE
+8. OUTPUTS AND ARTIFACTS
+
+
+================================================================================
+                      1. PROJECT OVERVIEW
+================================================================================
+
+This project implements a complete AI-powered mutual fund advisor that:
+- Collects 20 years of historical NAV data from 200+ Indian mutual funds
+- Stores data in SQLite database with comprehensive performance metrics
+- Trains Google Gemma-2B model with 25,000 investment scenarios
+- Provides personalized investment recommendations via web API
+- Generates 3 risk-based strategies: Low, Moderate, High
+- Includes tax optimization, SIP planning, and diversification
+- Offers backtesting framework for strategy validation
+
+
+================================================================================
+              2. ALL PYTHON FILES - ORGANIZED BY FUNCTION
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ A. AUTOMATION & SETUP (ONE-COMMAND EXECUTION)                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+⭐ setup_and_train_complete.py
+   PURPOSE: Complete automated pipeline - ONE COMMAND TO RULE THEM ALL
+   WHAT IT DOES:
+   - Checks and installs all dependencies
+   - Runs data collection (enhanced_20_year_collector.py)
+   - Generates training data
+   - Trains the model (train_enhanced_model.py)
+   - Creates all necessary directories
+   USAGE:
+   - Full run: python setup_and_train_complete.py
+   - Quick run: python setup_and_train_complete.py --quick
+   - Skip data: python setup_and_train_complete.py --skip-data
+   - Skip training: python setup_and_train_complete.py --skip-training
+   TIME: 2-5 hours (full), 10-15 min (quick)
+
+⭐ run_server.py
+   PURPOSE: Start the FastAPI server
+   WHAT IT DOES:
+   - Launches uvicorn server
+   - Serves web interface at http://localhost:8000
+   - Provides /api/recommend endpoint
+   USAGE: python run_server.py
+   REQUIRES: Trained model in models/enhanced_20y_advisor/
+
+⭐ run_backtesting_and_evaluation.py
+   PURPOSE: Comprehensive backtesting and model evaluation
+   WHAT IT DOES:
+   - Runs data quality validation
+   - Multi-timeframe backtesting (3M, 6M, 1Y, 3Y, 5Y, 10Y)
+   - Crisis scenario testing
+   - Model performance evaluation
+   USAGE: python run_backtesting_and_evaluation.py
+   OPTIONS:
+   - --skip-quality: Skip data validation
+   - --skip-backtest: Skip backtesting
+   - --num-funds 20: Use 20 funds instead of default 10
+   OUTPUTS:
+   - reports/backtest_1year.html
+   - reports/data_quality_report.json
+   - reports/model_evaluation_report.json
+
+install_dependencies.py
+   PURPOSE: Install Python packages
+   USAGE: python install_dependencies.py
+
+setup_huggingface.py
+   PURPOSE: Configure Hugging Face authentication token
+   USAGE: python setup_huggingface.py
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ B. DATA COLLECTION (STEP 1)                                             │
+└─────────────────────────────────────────────────────────────────────────┘
+
+⭐ src/enhanced_20_year_collector.py  [RECOMMENDED - USE THIS ONE]
+   PURPOSE: Main data collection script - most comprehensive
+   WHAT IT DOES:
+   - Fetches 200+ mutual funds from MFAPI.in
+   - Collects 20 years of daily NAV history
+   - Calculates comprehensive metrics:
+     * Returns (1Y, 3Y, 5Y, 10Y, 20Y)
+     * Volatility, Sharpe ratio, Sortino ratio
+     * Maximum drawdown
+     * Alpha, Beta, correlation with benchmarks
+   - Stores in SQLite: data/historical_20y.db
+   DATABASE TABLES CREATED:
+   - funds: Scheme metadata
+   - nav_history_20y: Daily NAV values (3.6M+ records)
+   - market_indices: Nifty50, Sensex benchmark data
+   - performance_metrics_20y: Calculated metrics
+   - market_regimes: Bull/Bear market periods
+   FUND CATEGORIES:
+   - Large Cap Equity (25 funds)
+   - Mid Cap Equity (25 funds)
+   - Small Cap Equity (25 funds)
+   - ELSS Tax Saving (25 funds)
+   - Index Funds (25 funds)
+   - Debt/Bond Funds (25 funds)
+   - Hybrid Funds (50 funds)
+   TIME: 15-45 minutes
+   USAGE:
+   python -c "import asyncio; from src.enhanced_20_year_collector import Enhanced20YearCollector; collector = Enhanced20YearCollector(); asyncio.run(collector.collect_20_year_data(max_funds=200))"
+
+src/historical_data_collector.py
+   PURPOSE: Alternative data collector (older version)
+   USE CASE: Fallback if enhanced collector has issues
+
+src/simple_data_collector.py
+   PURPOSE: Simplified data collection for testing
+   USE CASE: Quick testing with minimal data
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ C. DATA VALIDATION (OPTIONAL - STEP 2)                                  │
+└─────────────────────────────────────────────────────────────────────────┘
+
+src/data_quality_validator.py
+   PURPOSE: Validate data quality and completeness
+   WHAT IT CHECKS:
+   - Missing values in NAV data
+   - Outliers and anomalies
+   - Data consistency
+   - Completeness score
+   - Quality score (0-100)
+   USAGE:
+   python -c "from src.data_quality_validator import DataQualityValidator; v = DataQualityValidator(); v.validate_database('data/historical_20y.db')"
+   OUTPUT: reports/data_quality_report.json
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ D. TRAINING DATA GENERATION (STEP 3 - Usually Automated)                │
+└─────────────────────────────────────────────────────────────────────────┘
+
+src/generate_gemma_training_data.py
+   PURPOSE: Generate training scenarios for model
+   WHAT IT CREATES:
+   - 25,000+ investment scenarios
+   - User profiles (age, income, goals, risk tolerance)
+   - Market contexts (bull/bear, interest rates, inflation)
+   - Portfolio recommendations with rationale
+   - Tax optimization strategies
+   - SIP planning details
+   FORMAT: JSONL (JSON Lines)
+   OUTPUT: data/gemma_training_data_20y.jsonl
+   NOTE: Usually called automatically by training scripts
+
+src/advanced_training_data_generator.py
+   PURPOSE: Advanced training data with more complexity
+   USE CASE: Alternative to basic generator
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ E. MODEL TRAINING (STEP 4)                                              │
+└─────────────────────────────────────────────────────────────────────────┘
+
+⭐ train_enhanced_model.py  [RECOMMENDED FOR PRODUCTION]
+   PURPOSE: Main training script for production model
+   MODEL: Google Gemma-2B (2 billion parameters)
+   TECHNIQUE: LoRA (Low-Rank Adaptation) fine-tuning
+   DATA: 25,000 training examples
+   EPOCHS: 4
+   HARDWARE: Runs on CPU or GPU
+   TIME:
+   - GPU: 30-60 minutes
+   - CPU: 1-4 hours
+   OUTPUT: models/enhanced_20y_advisor/
+   MEMORY: ~8-12 GB RAM required
+   USAGE: python train_enhanced_model.py
+   FEATURES:
+   - Full model training with best quality
+   - Comprehensive portfolio generation
+   - Tax optimization
+   - Risk-adjusted allocations
+
+quick_train.py  [RECOMMENDED FOR TESTING]
+   PURPOSE: Fast training for testing and demos
+   MODEL: TinyLlama-1.1B (smaller model)
+   DATA: Only 50 samples
+   TIME: 5-10 minutes
+   OUTPUT: models/quick_advisor/
+   USAGE: python quick_train.py
+   USE CASE: Quick testing, demonstrations, development
+
+src/train_gemma_gpu.py
+   PURPOSE: GPU-optimized training
+   MODEL: microsoft/phi-2
+   TIME: 10-20 minutes (with GPU)
+   USAGE: python src/train_gemma_gpu.py
+
+src/enhanced_training.py
+   PURPOSE: Alternative training implementation
+   USE CASE: Experimental features
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ F. MODEL INFERENCE (STEP 5)                                             │
+└─────────────────────────────────────────────────────────────────────────┘
+
+⭐ src/inference_stable.py  [USED BY API]
+   PURPOSE: Production inference engine
+   WHAT IT DOES:
+   - Loads trained model
+   - Generates 3 investment strategies (Low/Moderate/High risk)
+   - Creates personalized portfolio allocations
+   - Includes fund details, rationale, SIP planning
+   - Rule-based recommendations + AI enhancement
+   - CPU-optimized for stability
+   INPUT: User profile (age, income, goals, risk tolerance, horizon)
+   OUTPUT: JSON with 3 strategies
+   USAGE: Called by api/app.py
+   STANDALONE TEST:
+   python -c "from src.inference_stable import generate_recommendations; print(generate_recommendations({'age': 30, 'income': 100000, 'goal': 'wealth', 'risk': 'moderate', 'horizon': 5}))"
+
+src/inference.py
+   PURPOSE: Alternative inference implementation
+   USE CASE: Experimental features
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ G. BACKTESTING (STEP 6 - OPTIONAL)                                      │
+└─────────────────────────────────────────────────────────────────────────┘
+
+backtesting/mf_backtest_engine.py
+   PURPOSE: Comprehensive backtesting framework
+   LIBRARY: bt (Python backtesting library)
+   FEATURES:
+   - Multi-timeframe testing:
+     * 3 months, 6 months, 1 year
+     * 3 years, 5 years, 10 years
+   - Crisis scenario testing:
+     * COVID-19 crash (2020)
+     * 2022 market correction
+     * Demonetization (2016)
+   - Strategy types:
+     * Equal-weight rebalancing
+     * Model-based allocations
+   - Performance metrics:
+     * Total return, annualized return
+     * Sharpe ratio, Sortino ratio
+     * Maximum drawdown
+     * Calmar ratio
+     * Win rate
+   OUTPUT:
+   - HTML report with charts (reports/backtest_1year.html)
+   - Performance summary tables
+   USAGE: Through run_backtesting_and_evaluation.py
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ H. MODEL EVALUATION (STEP 7 - OPTIONAL)                                 │
+└─────────────────────────────────────────────────────────────────────────┘
+
+evaluation/model_evaluator.py
+   PURPOSE: Evaluate model prediction accuracy
+   METRICS:
+   - RMSE (Root Mean Square Error)
+   - MAE (Mean Absolute Error)
+   - R² (R-squared)
+   - Directional accuracy
+   - Sharpe ratio
+   - Quintile analysis (top 20% vs bottom 20%)
+   - Category-wise performance
+   USAGE: Through run_backtesting_and_evaluation.py
+   OUTPUT: reports/model_evaluation_report.json
+
+evaluation/walk_forward_validation.py
+   PURPOSE: Time-series cross-validation
+   TECHNIQUE: Expanding/rolling window approach
+   PREVENTS: Data leakage in time-series data
+   USAGE: For advanced model validation
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ I. API & WEB INTERFACE (STEP 8 - DEPLOYMENT)                            │
+└─────────────────────────────────────────────────────────────────────────┘
+
+⭐ api/app.py  [MAIN API SERVER]
+   PURPOSE: FastAPI server for web interface
+   ENDPOINTS:
+   - GET /: Serve web interface (web/index.html)
+   - POST /api/recommend: Get investment recommendations
+   - GET /api/health: Health check
+   INPUT (POST /api/recommend):
+   {
+     "age": 30,
+     "income": 100000,
+     "goal": "wealth_creation",
+     "risk_tolerance": "moderate",
+     "investment_horizon": 5,
+     "current_savings": 50000
+   }
+   OUTPUT:
+   {
+     "strategies": [
+       {
+         "risk_level": "low",
+         "portfolio": [...funds...],
+         "expected_return": 10.5,
+         "allocation": {...}
+       },
+       {...moderate...},
+       {...high...}
+     ]
+   }
+   DEPENDENCIES:
+   - src/inference_stable.py
+   - data/historical_20y.db
+   - models/enhanced_20y_advisor/
+   PORT: 8000
+   URL: http://localhost:8000
+
+web/index.html
+   PURPOSE: User-friendly web interface
+   FEATURES:
+   - Investment profile form
+   - 3 strategy display
+   - Fund details with performance
+   - SIP calculator
+   - Risk comparison charts
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ J. UTILITY & CONFIGURATION                                              │
+└─────────────────────────────────────────────────────────────────────────┘
+
+src/config.py
+   PURPOSE: Centralized configuration
+   CONTAINS:
+   - Database paths
+   - Model settings
+   - API keys
+   - Logging configuration
+
+check_training_status.py
+   PURPOSE: Monitor training progress
+   USAGE: python check_training_status.py
+
+save_model_state.py
+   PURPOSE: Save/checkpoint model during training
+   USE CASE: Resume training after interruption
+
+
+================================================================================
+                  3. RECOMMENDED EXECUTION ORDER
+================================================================================
+
+┌────────────────────────────────────────────────────────────────────────┐
+│                    🏆 OPTION 1: AUTOMATED (BEST)                       │
+│                     Total Time: 2-5 hours                              │
+└────────────────────────────────────────────────────────────────────────┘
+
+STEP 1: One-command setup
+   COMMAND: python setup_and_train_complete.py
+   WHAT HAPPENS:
+   - Installs dependencies
+   - Collects 20 years of data (15-45 min)
+   - Generates training data (5-10 min)
+   - Trains model (1-4 hours)
+   OUTPUT: Ready-to-use system
+
+STEP 2: Start the server
+   COMMAND: python run_server.py
+   ACCESS: http://localhost:8000
+
+STEP 3 (Optional): Run backtesting
+   COMMAND: python run_backtesting_and_evaluation.py
+   OUTPUT: reports/backtest_1year.html
+
+
+┌────────────────────────────────────────────────────────────────────────┐
+│              🚀 OPTION 2: QUICK SETUP (FOR TESTING)                    │
+│                     Total Time: 10-15 minutes                          │
+└────────────────────────────────────────────────────────────────────────┘
+
+STEP 1: Quick setup
+   COMMAND: python setup_and_train_complete.py --quick
+   USES: TinyLlama, 50 samples only
+
+STEP 2: Start server
+   COMMAND: python run_server.py
+
+
+┌────────────────────────────────────────────────────────────────────────┐
+│                  📋 OPTION 3: MANUAL STEP-BY-STEP                      │
+│                     Total Time: 2-5 hours                              │
+└────────────────────────────────────────────────────────────────────────┘
+
+See Section 4 below for detailed step-by-step guide.
+
+
+================================================================================
+                  4. DETAILED STEP-BY-STEP GUIDE (Manual)
+================================================================================
+
+STEP 1: ENVIRONMENT SETUP (5 minutes)
+──────────────────────────────────────
+1. Create virtual environment:
+   python -m venv venv
+
+2. Activate virtual environment:
+   Windows: venv\Scripts\activate
+   Linux/Mac: source venv/bin/activate
+
+3. Install dependencies:
+   pip install -r requirements.txt
+
+4. Create .env file with Hugging Face token:
+   HUGGINGFACE_HUB_TOKEN=your_token_here
+
+   Get token from: https://huggingface.co/settings/tokens
+
+
+STEP 2: DATA COLLECTION (15-45 minutes)
+────────────────────────────────────────
+COMMAND:
+python -c "import asyncio; from src.enhanced_20_year_collector import Enhanced20YearCollector; collector = Enhanced20YearCollector(); asyncio.run(collector.collect_20_year_data(max_funds=200))"
+
+WHAT HAPPENS:
+- Connects to MFAPI.in
+- Downloads 200+ mutual funds
+- Collects 20 years NAV history
+- Calculates performance metrics
+- Creates data/historical_20y.db
+
+OUTPUT:
+- data/historical_20y.db (50-100 MB)
+- 3.6M+ NAV records
+- 200+ funds with metrics
+
+VERIFY SUCCESS:
+- Check file exists: data/historical_20y.db
+- Check logs for "Successfully collected data for X funds"
+
+
+STEP 3: DATA VALIDATION (Optional - 2 minutes)
+───────────────────────────────────────────────
+COMMAND:
+python -c "from src.data_quality_validator import DataQualityValidator; v = DataQualityValidator(); report = v.validate_database('data/historical_20y.db'); print(f'Quality Score: {report[\"avg_quality_score\"]}/100')"
+
+CHECKS:
+- Data completeness
+- Missing values
+- Outliers
+- Consistency
+
+OUTPUT:
+- reports/data_quality_report.json
+
+
+STEP 4: GENERATE TRAINING DATA (5-10 minutes)
+──────────────────────────────────────────────
+COMMAND:
+python -c "from src.generate_gemma_training_data import generate_training_data; generate_training_data(num_examples=25000, output_path='data/gemma_training_data_20y.jsonl', db_path='data/historical_20y.db')"
+
+CREATES:
+- 25,000 investment scenarios
+- User profiles with varying risk/goals
+- Portfolio recommendations
+
+OUTPUT:
+- data/gemma_training_data_20y.jsonl (50-100 MB)
+
+
+STEP 5: MODEL TRAINING (1-4 hours)
+───────────────────────────────────
+FOR PRODUCTION (Best Quality):
+   COMMAND: python train_enhanced_model.py
+   TIME: 1-4 hours (CPU), 30-60 min (GPU)
+   MODEL: Gemma-2B
+   OUTPUT: models/enhanced_20y_advisor/
+
+FOR QUICK TESTING (Fast):
+   COMMAND: python quick_train.py
+   TIME: 5-10 minutes
+   MODEL: TinyLlama-1.1B
+   OUTPUT: models/quick_advisor/
+
+WHAT HAPPENS:
+- Loads base model from Hugging Face
+- Applies LoRA fine-tuning
+- Trains on 25K examples, 4 epochs
+- Saves fine-tuned model
+
+MEMORY REQUIREMENTS:
+- Production: 8-12 GB RAM
+- Quick: 4-6 GB RAM
+
+VERIFY SUCCESS:
+- Check directory exists: models/enhanced_20y_advisor/
+- Check for files: pytorch_model.bin, config.json
+- Check logs: "Training completed successfully"
+
+
+STEP 6: TEST INFERENCE (2 minutes)
+───────────────────────────────────
+COMMAND:
+python -c "from src.inference_stable import generate_recommendations; import json; result = generate_recommendations({'age': 30, 'income': 100000, 'goal': 'wealth', 'risk': 'moderate', 'horizon': 5}); print(json.dumps(result, indent=2))"
+
+SHOULD OUTPUT:
+- 3 strategies (Low, Moderate, High risk)
+- Fund recommendations for each
+- Expected returns
+- Allocations
+
+IF ERRORS:
+- Check model directory exists
+- Check database exists
+- Check dependencies installed
+
+
+STEP 7: START API SERVER (1 minute)
+────────────────────────────────────
+COMMAND: python run_server.py
+
+SERVER INFO:
+- Port: 8000
+- URL: http://localhost:8000
+- API Endpoint: http://localhost:8000/api/recommend
+
+TEST IN BROWSER:
+1. Open http://localhost:8000
+2. Fill investment profile form
+3. Click "Get Recommendations"
+4. View 3 strategies
+
+TEST WITH CURL:
+curl -X POST http://localhost:8000/api/recommend -H "Content-Type: application/json" -d "{\"age\": 30, \"income\": 100000, \"goal\": \"wealth_creation\", \"risk_tolerance\": \"moderate\", \"investment_horizon\": 5}"
+
+
+STEP 8: RUN BACKTESTING (Optional - 30-60 minutes)
+───────────────────────────────────────────────────
+COMMAND: python run_backtesting_and_evaluation.py
+
+OR WITH OPTIONS:
+python run_backtesting_and_evaluation.py --num-funds 20
+
+WHAT RUNS:
+1. Data quality validation
+2. Multi-timeframe backtests (3M to 10Y)
+3. Crisis scenario testing
+4. Model evaluation
+
+OUTPUT FILES:
+- reports/backtest_1year.html (open in browser)
+- reports/data_quality_report.json
+- reports/model_evaluation_report.json
+- reports/prediction_scatter.png
+
+METRICS SHOWN:
+- Total return, annualized return
+- Sharpe ratio, Sortino ratio
+- Maximum drawdown
+- Win rate
+- Crisis period performance
+
+
+================================================================================
+                  5. ALTERNATIVE EXECUTION PATHS
+================================================================================
+
+PATH A: Skip Data Collection (Use Existing Database)
+─────────────────────────────────────────────────────
+USE CASE: Already collected data, just retrain model
+
+COMMANDS:
+python setup_and_train_complete.py --skip-data
+python run_server.py
+
+
+PATH B: Skip Training (Use Existing Model)
+───────────────────────────────────────────
+USE CASE: Model already trained, just run server
+
+COMMANDS:
+python run_server.py
+
+
+PATH C: Limited Funds (Faster Testing)
+───────────────────────────────────────
+USE CASE: Quick testing with fewer funds
+
+COMMANDS:
+python setup_and_train_complete.py --max-funds 50
+(Collects only 50 funds instead of 200)
+
+
+PATH D: Only Backtesting (No Server)
+─────────────────────────────────────
+USE CASE: Just validate strategy performance
+
+COMMANDS:
+# Ensure data exists
+python run_backtesting_and_evaluation.py
+
+
+PATH E: Only Data Collection (No Training/Server)
+──────────────────────────────────────────────────
+USE CASE: Just collect data for analysis
+
+COMMANDS:
+python -c "import asyncio; from src.enhanced_20_year_collector import Enhanced20YearCollector; collector = Enhanced20YearCollector(); asyncio.run(collector.collect_20_year_data(max_funds=200))"
+
+
+================================================================================
+                     6. FILE DEPENDENCIES MAP
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                         DEPENDENCY GRAPH                            │
+└─────────────────────────────────────────────────────────────────────┘
+
+setup_and_train_complete.py
+  │
+  ├─→ install_dependencies.py
+  │     └─→ requirements.txt
+  │
+  ├─→ src/enhanced_20_year_collector.py
+  │     ├─→ MFAPI.in (external)
+  │     ├─→ Yahoo Finance (external)
+  │     └─→ CREATES: data/historical_20y.db
+  │
+  ├─→ src/generate_gemma_training_data.py
+  │     ├─→ READS: data/historical_20y.db
+  │     └─→ CREATES: data/gemma_training_data_20y.jsonl
+  │
+  └─→ train_enhanced_model.py
+        ├─→ READS: data/gemma_training_data_20y.jsonl
+        ├─→ DOWNLOADS: google/gemma-2b from Hugging Face
+        └─→ CREATES: models/enhanced_20y_advisor/
+
+run_server.py
+  │
+  └─→ api/app.py
+        ├─→ src/inference_stable.py
+        │     ├─→ LOADS: models/enhanced_20y_advisor/
+        │     └─→ READS: data/historical_20y.db
+        │
+        └─→ SERVES: web/index.html
+
+run_backtesting_and_evaluation.py
+  │
+  ├─→ src/data_quality_validator.py
+  │     └─→ READS: data/historical_20y.db
+  │
+  ├─→ backtesting/mf_backtest_engine.py
+  │     ├─→ READS: data/historical_20y.db
+  │     └─→ CREATES: reports/backtest_1year.html
+  │
+  ├─→ evaluation/model_evaluator.py
+  │     └─→ CREATES: reports/model_evaluation_report.json
+  │
+  └─→ evaluation/walk_forward_validation.py
+
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                      REQUIRED EXTERNAL RESOURCES                    │
+└─────────────────────────────────────────────────────────────────────┘
+
+1. Hugging Face Token
+   - Required for: Downloading Gemma-2B model
+   - Get from: https://huggingface.co/settings/tokens
+   - Store in: .env file as HUGGINGFACE_HUB_TOKEN
+
+2. Internet Connection
+   - Required for: Data collection, model download
+   - APIs used: MFAPI.in, Yahoo Finance, Hugging Face
+
+3. Python 3.8+
+   - Check: python --version
+
+4. Disk Space
+   - Database: 50-100 MB
+   - Training data: 50-100 MB
+   - Model: 4-8 GB
+   - Total: ~10 GB recommended
+
+
+================================================================================
+                     7. TROUBLESHOOTING GUIDE
+================================================================================
+
+PROBLEM: "ModuleNotFoundError: No module named 'X'"
+──────────────────────────────────────────────────
+SOLUTION:
+pip install X
+OR
+pip install -r requirements.txt
+
+COMMON MISSING MODULES:
+- IPython: pip install ipython
+- bt: pip install bt
+- quantstats: pip install quantstats
+
+
+PROBLEM: "Database not found: data/historical_20y.db"
+──────────────────────────────────────────────────────
+SOLUTION:
+Run data collection first:
+python -c "import asyncio; from src.enhanced_20_year_collector import Enhanced20YearCollector; collector = Enhanced20YearCollector(); asyncio.run(collector.collect_20_year_data(max_funds=200))"
+
+
+PROBLEM: "No such table: nav_data" or "No such table: nav_history_20y"
+───────────────────────────────────────────────────────────────────────
+CAUSE: Database exists but is empty or corrupted
+SOLUTION:
+1. Delete existing database: del data\historical_20y.db
+2. Re-run data collection (see above)
+
+
+PROBLEM: "CUDA out of memory" during training
+──────────────────────────────────────────────
+SOLUTIONS:
+Option 1: Use CPU instead (slower but works)
+   - Training scripts auto-fallback to CPU
+
+Option 2: Use quick training (smaller model)
+   python quick_train.py
+
+Option 3: Reduce batch size (edit train_enhanced_model.py)
+   - Change per_device_train_batch_size from 2 to 1
+
+
+PROBLEM: "Token is invalid" or "401 Unauthorized" from Hugging Face
+────────────────────────────────────────────────────────────────────
+SOLUTION:
+1. Get new token: https://huggingface.co/settings/tokens
+2. Update .env file:
+   HUGGINGFACE_HUB_TOKEN=your_new_token_here
+3. Accept Gemma-2B license: https://huggingface.co/google/gemma-2b
+
+
+PROBLEM: Training is very slow on CPU
+──────────────────────────────────────
+EXPECTED:
+- Full training: 1-4 hours on CPU is normal
+- GPU would be 30-60 minutes
+
+SOLUTIONS:
+Option 1: Use quick training
+   python quick_train.py (5-10 minutes)
+
+Option 2: Reduce training data
+   Edit train_enhanced_model.py, change num_examples to 1000
+
+
+PROBLEM: "Address already in use" when starting server
+───────────────────────────────────────────────────────
+CAUSE: Port 8000 is already in use
+SOLUTION:
+Option 1: Kill existing process on port 8000
+   Windows: netstat -ano | findstr :8000
+            taskkill /PID <PID> /F
+   Linux: kill $(lsof -t -i:8000)
+
+Option 2: Change port in run_server.py
+   Edit: uvicorn.run(app, host="0.0.0.0", port=8001)
+
+
+PROBLEM: API returns empty or incorrect recommendations
+────────────────────────────────────────────────────────
+CHECKS:
+1. Model exists: models/enhanced_20y_advisor/
+2. Database exists: data/historical_20y.db
+3. Check logs in logs/ directory
+4. Test inference directly:
+   python -c "from src.inference_stable import generate_recommendations; print(generate_recommendations({'age': 30, 'income': 100000, 'goal': 'wealth', 'risk': 'moderate', 'horizon': 5}))"
+
+
+PROBLEM: Backtesting fails with "insufficient data"
+────────────────────────────────────────────────────
+CAUSE: Not enough historical data for long timeframes (e.g., 10-year backtest)
+SOLUTION: Use shorter timeframes or collect more historical data
+
+
+================================================================================
+                     8. OUTPUTS AND ARTIFACTS
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                         DATA ARTIFACTS                              │
+└─────────────────────────────────────────────────────────────────────┘
+
+data/historical_20y.db
+   SIZE: 50-100 MB
+   TYPE: SQLite database
+   TABLES:
+   - funds (200+ rows)
+   - nav_history_20y (3.6M+ rows)
+   - market_indices
+   - performance_metrics_20y
+   - market_regimes
+   CREATED BY: enhanced_20_year_collector.py
+
+data/gemma_training_data_20y.jsonl
+   SIZE: 50-100 MB
+   TYPE: JSON Lines (one JSON per line)
+   RECORDS: 25,000 training examples
+   CREATED BY: generate_gemma_training_data.py
+
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                         MODEL ARTIFACTS                             │
+└─────────────────────────────────────────────────────────────────────┘
+
+models/enhanced_20y_advisor/
+   SIZE: 4-8 GB
+   FILES:
+   - pytorch_model.bin (model weights)
+   - config.json (model configuration)
+   - tokenizer.json, tokenizer_config.json
+   - adapter_config.json (LoRA config)
+   - adapter_model.bin (LoRA weights)
+   CREATED BY: train_enhanced_model.py
+
+models/quick_advisor/
+   SIZE: 2-4 GB
+   CREATED BY: quick_train.py (for testing)
+
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                         REPORT ARTIFACTS                            │
+└─────────────────────────────────────────────────────────────────────┘
+
+reports/backtest_1year.html
+   TYPE: Interactive HTML report
+   CONTAINS:
+   - Performance charts
+   - Drawdown analysis
+   - Monthly/yearly returns table
+   - Risk metrics
+   - Comparison with benchmarks
+   OPEN WITH: Web browser
+   CREATED BY: run_backtesting_and_evaluation.py
+
+reports/data_quality_report.json
+   TYPE: JSON report
+   CONTAINS:
+   - Data completeness scores
+   - Quality metrics per fund
+   - Missing value analysis
+   - Outlier detection results
+   CREATED BY: data_quality_validator.py
+
+reports/model_evaluation_report.json
+   TYPE: JSON report
+   CONTAINS:
+   - RMSE, MAE, R² scores
+   - Directional accuracy
+   - Category-wise performance
+   - Quintile analysis
+   CREATED BY: model_evaluator.py
+
+reports/prediction_scatter.png
+   TYPE: PNG image
+   CONTAINS: Scatter plot of predicted vs actual returns
+   CREATED BY: model_evaluator.py
+
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                         LOG ARTIFACTS                               │
+└─────────────────────────────────────────────────────────────────────┘
+
+logs/training_YYYYMMDD_HHMMSS.log
+   TYPE: Text log file
+   CONTAINS: Training progress, metrics, errors
+   CREATED BY: train_enhanced_model.py
+
+logs/data_collection_YYYYMMDD.log
+   TYPE: Text log file
+   CONTAINS: Data collection progress, API responses
+   CREATED BY: enhanced_20_year_collector.py
+
+
+================================================================================
+                     QUICK REFERENCE COMMANDS
+================================================================================
+
+ONE-COMMAND SETUP (Recommended):
+└─ python setup_and_train_complete.py && python run_server.py
+
+QUICK SETUP (Testing):
+└─ python setup_and_train_complete.py --quick && python run_server.py
+
+MANUAL SETUP:
+├─ 1. Data: python -c "import asyncio; from src.enhanced_20_year_collector import Enhanced20YearCollector; collector = Enhanced20YearCollector(); asyncio.run(collector.collect_20_year_data())"
+├─ 2. Train: python train_enhanced_model.py
+└─ 3. Serve: python run_server.py
+
+BACKTESTING:
+└─ python run_backtesting_and_evaluation.py
+
+TEST INFERENCE:
+└─ python -c "from src.inference_stable import generate_recommendations; print(generate_recommendations({'age': 30, 'income': 100000, 'goal': 'wealth', 'risk': 'moderate', 'horizon': 5}))"
+
+CHECK SERVER:
+└─ Open browser: http://localhost:8000
+
+
+================================================================================
+                     SUPPORT AND DOCUMENTATION
+================================================================================
+
+Project Directory: C:\College notes\4th year\major project\MF_Advisor_Project
+Main Documentation: README.md
+This Guide: PROJECT_EXECUTION_GUIDE.txt
+
+For issues or questions, check:
+1. logs/ directory for error details
+2. requirements.txt for dependency versions
+3. Troubleshooting guide (Section 7 above)
+
+
+================================================================================
+                     SUMMARY: SIMPLEST PATH
+================================================================================
+
+TO RUN THE COMPLETE SYSTEM:
+
+   COMMAND 1: python setup_and_train_complete.py
+   TIME: 2-5 hours
+
+   COMMAND 2: python run_server.py
+   ACCESS: http://localhost:8000
+
+FOR QUICK TESTING:
+
+   COMMAND 1: python setup_and_train_complete.py --quick
+   TIME: 10-15 minutes
+
+   COMMAND 2: python run_server.py
+   ACCESS: http://localhost:8000
+
+
+================================================================================
+                     END OF EXECUTION GUIDE
+================================================================================
+Last Updated: 2025-11-03
+Version: 1.0

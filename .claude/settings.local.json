@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"C:\\College notes\\4th year\\major project\\MF_Advisor_Project\\venv\\Scripts\\python.exe\" run_backtesting_and_evaluation.py --skip-backtest --skip-evaluation --skip-quality)",
+      "Bash(tree:*)",
+      "Bash(nul)",
+      "Bash(dir:*)",
+      "Bash(\"C:\\College notes\\4th year\\major project\\MF_Advisor_Project\\venv\\Scripts\\python.exe\" run_backtesting_and_evaluation.py --skip-training --skip-evaluation)",
+      "Bash(start reports/backtest_comprehensive.html)",
+      "Bash(findstr:*)",
+      "Bash(python:*)",
+      "Bash(git init:*)",
+      "Bash(git remote add:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

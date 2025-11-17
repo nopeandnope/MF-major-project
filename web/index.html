@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MF Advisor</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="nav-container">
+        <div class="logo">
+          <span class="logo-text">MF Advisor</span>
+          <span class="logo-subtitle">Investment Intelligence</span>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container">
+      <!-- Investment Input Section -->
+      <section class="card input-card">
+        <h2>Investment Profile</h2>
+        <form id="investmentForm">
+          <div class="form-horizontal">
+            <div class="form-group">
+              <label for="amount">Amount (₹)</label>
+              <input id="amount" name="amount" type="number" min="1000" value="250000" required />
+            </div>
+            <div class="form-group">
+              <label for="horizon">Horizon (years)</label>
+              <input id="horizon" name="horizon" type="number" min="1" value="5" required />
+            </div>
+            <div class="form-group">
+              <label for="risk_tolerance">Risk Level</label>
+              <select id="risk_tolerance" name="risk_tolerance">
+                <option value="Low">Low Risk</option>
+                <option value="Moderate" selected>Moderate Risk</option>
+                <option value="High">High Risk</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="financial_goal">Investment Goal</label>
+              <select id="financial_goal" name="financial_goal">
+                <option>Wealth Creation</option>
+                <option>Tax Saving</option>
+                <option>Education</option>
+                <option>Retirement</option>
+                <option>Short Term</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="age">Your Age</label>
+              <input id="age" name="age" type="number" min="18" max="100" value="32" required />
+            </div>
+            <div class="form-group">
+              <button type="submit" class="btn-primary">Get My Recommendations</button>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <!-- Three Investment Options Section -->
+      <section id="optionsSection" class="card" style="display: none;">
+        <h2>🎯 Choose Your Investment Strategy</h2>
+        <p class="options-intro">Based on your profile, we've created 3 tailored investment strategies. Each option uses different mutual funds to achieve your goals.</p>
+
+        <!-- All Options Display -->
+        <div id="allOptionsContainer" class="all-options-container">
+          <!-- All 3 options will be displayed here simultaneously -->
+        </div>
+      </section>
+
+      <!-- Selected Option Details -->
+      <section id="selectedOptionSection" class="card" style="display: none;">
+        <h2>📋 Your Selected Option Details</h2>
+        <div id="selectedOptionDetails"></div>
+      </section>
+
+      <!-- Detailed Strategy Section -->
+      <section id="recommendationsSection" class="card" style="display: none;">
+        <h2>📋 Investment Strategy & Next Steps</h2>
+        <div id="detailedRecommendations"></div>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+  </html>
+

@@ -1,0 +1,18 @@
+{
+  "collection_completed": "2025-10-07T15:27:43.559478",
+  "duration_hours": 0.09456148972222223,
+  "total_schemes_processed": 1500,
+  "successfully_saved": 1312,
+  "success_rate": 87.5,
+  "funds_by_years": {
+    "20+": 76,
+    "15-20": 527,
+    "10-15": 229,
+    "5-10": 207,
+    "3-5": 132,
+    "<3": 141
+  },
+  "market_indices_collected": 9,
+  "database_path": "data\\comprehensive_mf_data.db",
+  "data_quality_average": 0.92
+}
