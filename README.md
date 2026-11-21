@@ -1,224 +1,61 @@
-# 🚀 AI-Powered Mutual Fund Advisor
+# AI-Powered Mutual Fund Recommendation System
 
-AI-powered investment recommendation system using Google Gemma-2B with 20-year historical data analysis.
+A quantitative advisory system for Indian mutual funds: a deterministic backtesting and portfolio engine, plus a fine-tuned LLM that explains its recommendations.
 
-## ⚡ Quick Start (3 Commands)
+**Co-built by Ashwin Chellissaryil Shaji and Siraj Fahmida Senthil** as our B.Tech major project at NITK Surathkal (guide: Dr. Deepu Vijayasenan), 2025-26.
+
+## What it does
+
+- **Data:** NAV history for Indian open-ended mutual funds (HDFC, ICICI, Axis, Kotak, SBI; equity, debt, hybrid and ELSS) from mfapi (AMFI-sourced), with NIFTY 50 / SENSEX benchmarks from Yahoo Finance. **19 schemes pass validation, 18 of them with 10-15 years of history.**
+- **Data quality:** completeness above 95%, daily-move sanity bounds, z-score outlier filter.
+- **Fund scoring:** multi-factor - rolling returns, Sortino, maximum drawdown, 95% VaR, beta, expense ratio, tracking error.
+- **Five backtested strategies:** Conservative, Balanced, Aggressive, Risk Parity (inverse-volatility weights) and 6-month Momentum. The API serves three strategy options per request.
+- **Risk management:** position sizing (equal weight, risk parity, fractional Kelly), multi-level stop-loss and a volatility circuit breaker; 0.1% transaction cost in backtests.
+- **Analysis:** 10,000-path bootstrap Monte Carlo, 3-state Hidden Markov Model for regime detection, historical stress tests (2020 COVID crash, 2022).
+- **LLM layer:** Google Gemma-2B fine-tuned with LoRA (r=32, 1.54% trainable parameters) on 25,000 generated examples. **The LLM only writes explanations; every number and allocation comes from the deterministic engine.**
+- **Serving:** FastAPI backend on SQLite.
+
+## Results - read with care
+
+Balanced strategy, 2014-2024: 14.23% annualised return, Sharpe 1.45 (NIFTY 50: 0.82), Sortino 2.18, maximum drawdown 10.15%.
+
+**These are in-sample results.** Strategy choices were made on the same period they are measured on, so they overstate what to expect live. A re-test under **walk-forward validation** (expanding/rolling windows with a train/test gap, `evaluation/walk_forward_validation.py`) with realistic transaction costs is in progress; results will be added here when done.
+
+## Quick start
 
 ```bash
-# 1. Create and activate virtual environment
+# 1. Create and activate a virtual environment
 python -m venv venv
-venv\Scripts\activate  # Windows
-# source venv/bin/activate  # Linux/Mac
+venv\Scripts\activate          # Windows
+# source venv/bin/activate     # Linux/Mac
 
-# 2. Run automated setup (everything in one command!)
+# 2. Install, collect data and train
 python setup_and_train_complete.py
+#   --quick           dependencies only (~5 min)
+#   --skip-data       reuse existing data
+#   --skip-training   reuse an existing model
+#   --max-funds 50    collect fewer funds
 
-# 3. Start the server
+# 3. Start the server, then open http://localhost:8000
 python run_server.py
 ```
 
-That's it! Open http://localhost:8000 in your browser.
+Training needs a Hugging Face token with access to `google/gemma-2b`, saved in a `.env` file as `HUGGINGFACE_HUB_TOKEN=...`. Requirements: Python 3.11+, 8 GB RAM minimum (16 GB recommended), ~10 GB free disk.
 
-## 🎯 What Does This Do?
+## API
 
-- **Collects** 20-year historical data for 200+ mutual funds
-- **Trains** Google Gemma-2B model with LoRA fine-tuning
-- **Provides** AI-powered personalized investment recommendations
-- **Analyzes** risk, returns, and portfolio optimization
+`POST /api/recommend`
 
-## 📊 Features
-
-✅ 20-year historical NAV data (3.6M+ records)
-✅ Google Gemma-2B model (2B parameters)
-✅ LoRA fine-tuning (1.54% trainable params)
-✅ 25,000 training examples
-✅ Risk-adjusted portfolio construction
-✅ Tax optimization (ELSS)
-✅ SIP and lumpsum planning
-✅ Real-time recommendations via API
-
-## 🛠️ Setup Options
-
-### Full Setup (Recommended)
-```bash
-python setup_and_train_complete.py
-```
-Time: 2-5 hours | Does: Everything
-
-### Quick Setup (Skip Training)
-```bash
-python setup_and_train_complete.py --quick
-```
-Time: 5 minutes | Does: Dependencies only
-
-### Custom Setup
-```bash
-# Skip data collection (use existing)
-python setup_and_train_complete.py --skip-data
-
-# Skip training (use existing model)
-python setup_and_train_complete.py --skip-training
-
-# Collect less data (faster)
-python setup_and_train_complete.py --max-funds 50
-```
-
-## 📁 Project Structure
-
-```
-MF_Advisor_Project/
-├── setup_and_train_complete.py  ⭐ One-command setup
-├── run_server.py                → Start web server
-├── train_enhanced_model.py      → Train model
-├── PROJECT_SETUP_GUIDE.txt      → Detailed guide
-│
-├── api/
-│   └── app.py                   → FastAPI application
-├── src/
-│   ├── enhanced_20_year_collector.py  → Data collection
-│   └── inference_stable.py      → AI inference
-├── web/
-│   ├── index.html               → Web interface
-│   └── static/app.js            → Frontend logic
-│
-├── data/
-│   └── historical_20y.db        → 20-year database
-├── models/
-│   └── enhanced_20y_advisor/    → Trained model
-└── logs/                        → All logs
-```
-
-## 🔧 Requirements
-
-- **Python**: 3.11+
-- **RAM**: 8GB minimum (16GB recommended)
-- **Disk**: 10GB free space
-- **Internet**: Required for data collection
-
-## 📖 API Usage
-
-### Start Server
-```bash
-python run_server.py
-```
-
-### Get Recommendations (POST /api/recommend)
 ```bash
 curl -X POST http://localhost:8000/api/recommend \
   -H "Content-Type: application/json" \
-  -d '{
-    "amount": 100000,
-    "horizon": 5,
-    "risk_tolerance": "Moderate",
-    "financial_goal": "Wealth Creation",
-    "age": 30
-  }'
+  -d '{"amount": 100000, "horizon": 5, "risk_tolerance": "Moderate", "financial_goal": "Wealth Creation", "age": 30}'
 ```
 
-### Response
-```json
-{
-  "recommendations": [
-    {
-      "fund_name": "HDFC Top 100 Fund",
-      "category": "Large Cap",
-      "allocation_percentage": 40,
-      "amount": 40000,
-      "expected_return": 12.5,
-      "risk_level": "Moderate"
-    }
-  ],
-  "total_expected_return": 11.8,
-  "portfolio_summary": "Balanced growth portfolio..."
-}
-```
+## Tech
 
-## 🐛 Troubleshooting
+Python, pandas, NumPy, SciPy, scikit-learn, LightGBM, `bt` / `quantstats` for backtest analytics, PyTorch + Hugging Face Transformers/PEFT, FastAPI, SQLite, aiohttp.
 
-### Import Errors
-```bash
-pip install -r requirements.txt
-```
+## Disclaimer
 
-### Out of Memory
-Edit `train_enhanced_model.py`:
-- Line 37: Change `batch_size` to 1
-- Line 38: Increase `gradient_accumulation_steps` to 32
-
-### Hugging Face Token
-1. Visit https://huggingface.co/google/gemma-2b
-2. Request access and accept terms
-3. Generate token at https://huggingface.co/settings/tokens
-4. Create `.env` file: `HUGGINGFACE_HUB_TOKEN=your_token_here`
-
-### Port 8000 In Use
-Edit `run_server.py` and change port to 8001
-
-## 📊 Training Progress
-
-Monitor training:
-```bash
-# Windows
-type logs\enhanced_model_training.log
-
-# Linux/Mac
-tail -f logs/enhanced_model_training.log
-```
-
-## 🎓 Manual Steps (Alternative)
-
-If you prefer manual control:
-
-```bash
-# 1. Setup environment
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-
-# 2. Collect data (15-45 min)
-python -c "import asyncio; from src.enhanced_20_year_collector import Enhanced20YearCollector; collector = Enhanced20YearCollector(); asyncio.run(collector.collect_20_year_data(max_funds=200))"
-
-# 3. Train model (1-4 hours)
-python train_enhanced_model.py
-
-# 4. Start server
-python run_server.py
-```
-
-## 🚀 Performance Tips
-
-**Faster Setup:**
-- Use `--quick` flag
-- Use `--max-funds 50`
-- Reduce training examples in `train_enhanced_model.py`
-
-**Better Accuracy:**
-- Use `--max-funds 500`
-- Increase `num_epochs` to 6-8
-- Increase training examples to 50,000
-- Use GPU (automatic detection)
-
-## 📜 License
-
-This project is for educational purposes. Always consult SEBI-registered financial advisors before making investment decisions.
-
-## 🤝 Contributing
-
-This is an academic project. Feel free to fork and modify for your needs.
-
-## 📞 Support
-
-For detailed documentation, see `PROJECT_SETUP_GUIDE.txt`
-
-## ⚠️ Disclaimer
-
-This is an AI-powered recommendation system based on historical data. Past performance does not guarantee future results. Always consult with qualified financial advisors before making investment decisions.
-
----
-
-**Made with ❤️ using Google Gemma-2B and Python**
-
-**Quick Start**: `python setup_and_train_complete.py`
-**Start Server**: `python run_server.py`
-**Access**: http://localhost:8000
-
+Academic project. Not investment advice. Past performance does not guarantee future results; consult a SEBI-registered adviser before investing.
